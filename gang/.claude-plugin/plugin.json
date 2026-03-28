@@ -1,0 +1,22 @@
+{
+  "name": "gang",
+  "version": "1.1.0",
+  "description": "Multi-agent business committee that orchestrates domain experts through structured debate to produce scored strategic plans and executive-ready recommendations",
+  "author": {
+    "name": "ebnrdwan"
+  },
+  "license": "MIT",
+  "keywords": [
+    "business-strategy",
+    "multi-agent",
+    "committee",
+    "debate",
+    "product-management",
+    "market-research",
+    "ux-research",
+    "finance",
+    "architecture",
+    "executive-advisory",
+    "google-stitch"
+  ]
+}
