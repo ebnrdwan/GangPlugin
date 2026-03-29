@@ -213,6 +213,81 @@ graph TB
 | 🏗️ **Solutions Architect** | Sonnet | Feasibility scoring, architecture, tech stack evaluation, build-vs-buy TCO, tech debt scoring, DORA metrics, ADRs |
 | 📈 **Business Strategist** | Sonnet | Business Model Canvas, GTM strategy (3 phases), competitive moat, pricing tiers, differentiation analysis |
 
+All 6 agents run in **a single parallel dispatch** — you see results as each expert finishes:
+
+<details>
+<summary>📋 <strong>Real output: PM Lead on a stock details page</strong></summary>
+
+> **Bottom Line:** Ship 6 sections of the Stock Details Page in 5 weeks. Defer XGBoost Price Outlook and Market Regime Badge because the ML bugs are unresolved — broken predictions are worse than absent ones.
+>
+> **Key decisions:**
+> 1. **MVP vs v2 split.** Six sections in v1 (Header, Chart, Indicators, Patterns, Position Banner, Intelligence Stream), four deferred. The RICE scores expose the real finding: 5 of the 6 v1 sections have zero new backend work required.
+> 2. **Critical path finding.** Build Indicators + Patterns + News + Header first (all unblocked today), then add the chart once the OHLCV endpoint is done. The page ships value before the chart lands.
+> 3. **Free vs Premium gating.** AI recommendation badge and confidence percentage are the Pro paywall anchor. Basic chart and indicators are free — gating standard indicators drives users to TradingView.
+> 4. **ML section deferred with clear re-entry condition.** XGBoost Price Outlook deferred until backtested accuracy exceeds 60% on a 90-day holdout. No feature flag shipped without that gate.
+
+</details>
+
+<details>
+<summary>🌐 <strong>Real output: Market Researcher competitive scoring</strong></summary>
+
+> **Market Sizing:**
+> - Bottom-up TAM: $1.35B (3M paying retail traders x $450/yr average spend). The context brief's $8B figure conflates raw data licensing with the pure SaaS tools layer.
+> - SAM: $840M–$1.26B. SOM Year 1: $600K–$3M ARR at 1,000–5,000 users.
+>
+> **Competitive Scores (weighted):**
+> - TradingView: 4.35/5 · TOS: 3.75/5 · Trade Ideas: 3.35/5 · TrendSpider: 3.15/5 · StockInsight now: 2.55/5
+> - TOS (thinkorswim, free with Schwab) is underrated in the brief — it is a significant free substitute on the stock detail surface.
+>
+> **Biggest Risk Flagged:** The yfinance redistribution legal status is the highest-risk unresolved supplier issue — if exchange agreements prohibit redistribution to paying users, the fundamentals section requires a paid data provider, compressing margins.
+
+</details>
+
+<details>
+<summary>🏗️ <strong>Real output: Solutions Architect code-level findings</strong></summary>
+
+> **Feasibility: 7/10.** The Stock Details Page is buildable in 6 weeks for a solo founder — but only with deliberate scope cuts.
+>
+> **What the code review revealed:**
+> - `TradingChart.tsx` is fully built with proper dark theme and volume histogram. It is just not wired up — there is a placeholder div on the page where it should render. This is a half-day fix, not a multi-week build.
+> - `MarketDataProvider` is well-designed with a proper ABC. `get_historical()` already exists on `YahooProvider`. The OHLCV endpoint is purely a serialization exercise.
+> - Symbol is stored in component state, not the URL. This is a 20-minute fix that unblocks bookmarking and sharing — it should be the first commit.
+>
+> **The "STRONG BUY 94%" header badge is a lie.** The current `_derive_signal()` produces a ratio of bullish indicators to total factors. It is not a calibrated probability. Labeling it "94% confidence" would mislead traders and create SEC/FINRA surface area. Ship it as "Signal Confidence" with the honest computed value.
+
+</details>
+
+<details>
+<summary>💰 <strong>Real output: Finance Analyst risk escalation</strong></summary>
+
+> **Data Licensing — promoted to Risk Score 20 (was 8).** Serving scraped Yahoo Finance data to paying users almost certainly violates Yahoo's ToS and exchange redistribution agreements. The fix costs $29/mo (Polygon.io Basic). This must be resolved before the first paid user signs up.
+>
+> **ROI Per Section:** The Candlestick Chart, Technical Patterns, Intelligence Stream, and Position Banner are the highest-ROI sections — they drive daily return habits and differentiate from free tools without requiring ML model fixes.
+>
+> **Kill Switches (7 specific conditions):** Binary, time-bound financial triggers with prescribed actions — not general cautions.
+>
+> **Stress test conclusion:** At -50% revenue the business remains cash-flow positive (cash costs are only $1,074/mo). The real stress failure is founder motivation after 12 months at below-market compensation — a key-person risk, not a solvency risk.
+
+</details>
+
+<details>
+<summary>📈 <strong>Real output: Business Strategist conversion funnel</strong></summary>
+
+> **Core Strategic Argument:** The Stock Details Page is a three-job machine: **acquire** (free, indexable, shareable), **tease** (visible but locked), **retain** (sticky Pro features). The conversion funnel runs top-to-bottom on the page — every section has an assigned role.
+>
+> **Pricing tiers:**
+> - Free: 1D chart, full technical indicators, 3 news items, price header
+> - Starter ($29/mo): All timeframes, patterns, earnings, regime badge, fundamentals
+> - Pro ($49/mo): AI Recommendation badge, XGBoost Outlook, Signal History, Position Banner
+>
+> The AI Recommendation badge as a blurred teaser in the page header is the single highest-ROI conversion trigger. It is visible on every page load, requires no ML work to implement as a teaser, and creates an immediate upgrade moment.
+>
+> **Critical Risk:** The ML accuracy problem is a load-bearing assumption under the entire Pro pricing tier. Do not gate revenue on broken features — launch Pro with rule-based signals labeled honestly. Shipping broken AI signals as a paid feature is a trust-destroying event that no marketing recovers from.
+
+</details>
+
+> 💡 **Notice how experts independently converged** on the same risks (yfinance licensing, ML accuracy) and the same recommendation (defer ML, ship rule-based signals first) — without seeing each other's work. This is the power of role-isolated parallel analysis.
+
 ---
 
 ### ⚔️ Stage 3 — DEBATE: Structured Adversarial Review
