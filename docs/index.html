@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gang - Multi-Agent Business Committee for Claude Code</title>
+  <meta name="description" content="One command. Six experts. One verdict. Gang turns Claude Code into a boardroom with 6 domain experts and a CEO/CTO advisor.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      /* Backgrounds */
+      --bg-main: #121317;
+      --bg-section: #1a1b20;
+      --bg-dark: #0d0e12;
+      --bg-card: #1f1f24;
+
+      /* Purple spectrum */
+      --purple-light: #cfbcff;
+      --purple-mid: #aa8aff;
+      --purple-deep: #6e25f6;
+      --purple-bg: rgba(63, 0, 157, 0.2);
+
+      /* Cyan */
+      --cyan: #bdf4ff;
+      --cyan-bright: #00e3fd;
+
+      /* Pink */
+      --pink: #ffabf3;
+
+      /* Coral */
+      --coral: #ffb4ab;
+
+      /* Text */
+      --text-heading: #e3e2e7;
+      --text-body: #c9c4d5;
+      --text-muted: rgba(146, 143, 158, 0.4);
+      --text-dim: rgba(146, 143, 158, 0.2);
+
+      /* Border */
+      --border-subtle: rgba(71, 69, 83, 0.1);
+      --border-light: rgba(71, 69, 83, 0.2);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: rgba(18, 19, 23, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 8px 16px rgba(110, 37, 246, 0.08);
+    }
+    .nav-logo {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: -1.2px;
+      background: linear-gradient(150deg, #cfbcff 0%, #6e25f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: rgba(189, 244, 255, 0.6);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--purple-light);
+    }
+    .nav-links a.active {
+      border-bottom: 2px solid var(--purple-light);
+      padding-bottom: 6px;
+    }
+    .nav-cta {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: #3a0092;
+      background: linear-gradient(164deg, #cfbcff 0%, #6e25f6 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 24px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(110, 37, 246, 0.4);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 157px 24px;
+      overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      border-radius: 12px;
+      background: var(--purple-bg);
+      filter: blur(60px);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      max-width: 896px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 7px 17px;
+    }
+    .hero-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+    .hero-badge-text {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 16px;
+      color: var(--cyan);
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+    .hero-title {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 800;
+      font-size: 128px;
+      letter-spacing: -6.4px;
+      text-align: center;
+      background: linear-gradient(161deg, #cfbcff 0%, #aa8aff 50%, #6e25f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .hero-subtitle {
+      font-size: 24px;
+      color: var(--text-body);
+      text-align: center;
+      max-width: 672px;
+      line-height: 32px;
+    }
+    .hero-install {
+      display: flex;
+      align-items: center;
+      background: var(--bg-dark);
+      border-radius: 8px;
+      padding: 4px;
+      margin-top: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .hero-install code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: var(--purple-light);
+      padding: 12px 24px;
+    }
+    .hero-install-copy {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .hero-install-copy:hover { color: var(--text-heading); }
+    .hero-install-copy svg { width: 17px; height: 20px; }
+    .hero-badges {
+      display: flex;
+      gap: 16px;
+      margin-top: 40px;
+      opacity: 0.7;
+    }
+    .hero-badges .badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      padding: 5px 13px;
+    }
+    .hero-badges .badge span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-heading);
+    }
+    .hero-badges .badge svg {
+      width: 12px;
+      height: 12px;
+      color: var(--text-body);
+    }
+
+    /* ── Section: The Gap ── */
+    .section { padding: 128px 32px; }
+    .section--alt { background: var(--bg-section); }
+    .section--dark { background: var(--bg-dark); }
+    .container { max-width: 1280px; margin: 0 auto; width: 100%; }
+
+    .gap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    .gap-title {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 48px;
+      color: var(--text-heading);
+      letter-spacing: -1.2px;
+      line-height: 1;
+      margin-bottom: 32px;
+    }
+    .gap-title .highlight { color: var(--pink); }
+    .gap-text {
+      font-size: 18px;
+      color: var(--text-body);
+      line-height: 29px;
+      margin-bottom: 32px;
+    }
+    .gap-quote {
+      border-left: 4px solid var(--purple-light);
+      padding: 16px 0 16px 36px;
+      font-size: 24px;
+      color: var(--text-heading);
+      line-height: 32px;
+    }
+    .gap-visual {
+      position: relative;
+    }
+    .gap-visual-glow {
+      position: absolute;
+      inset: -16px;
+      background: linear-gradient(145deg, rgba(207, 188, 255, 0.2) 0%, rgba(255, 171, 243, 0.2) 100%);
+      filter: blur(20px);
+      opacity: 0.5;
+      border-radius: 16px;
+    }
+    .gap-visual-card {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .gap-visual-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, rgba(207, 188, 255, 0.05) 0%, rgba(255, 171, 243, 0.05) 100%);
+      border-radius: 16px;
+    }
+    .gap-visual-inner {
+      position: relative;
+      text-align: center;
+    }
+    .gap-visual-inner .icon {
+      font-size: 60px;
+      margin-bottom: 16px;
+    }
+    .gap-visual-inner .label {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--purple-light);
+      letter-spacing: 2.8px;
+      text-transform: uppercase;
+    }
+
+    /* ── Section: Strategy Flow ── */
+    .flow-header {
+      text-align: center;
+      margin-bottom: 80px;
+    }
+    .flow-header h2 {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 36px;
+      color: var(--text-heading);
+      margin-bottom: 16px;
+    }
+    .flow-header p {
+      font-size: 16px;
+      color: var(--text-body);
+    }
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .flow-card {
+      background: var(--bg-section);
+      border-radius: 8px;
+      border-left: 4px solid;
+      padding: 32px;
+      min-height: 224px;
+      display: flex;
+      flex-direction: column;
+    }
+    .flow-card--1 { border-color: var(--purple-light); }
+    .flow-card--2 { border-color: var(--cyan); }
+    .flow-card--3 { border-color: var(--pink); }
+    .flow-card--4 { border-color: var(--purple-light); }
+    .flow-card-number {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 36px;
+      color: var(--text-dim);
+      line-height: 40px;
+      margin-bottom: 16px;
+    }
+    .flow-card-title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--text-heading);
+      line-height: 28px;
+      margin-bottom: 6px;
+    }
+    .flow-card-desc {
+      font-size: 14px;
+      color: var(--text-body);
+      line-height: 22.75px;
+    }
+
+    /* ── Section: Command Center ── */
+    .command-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .command-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .command-header-left svg {
+      width: 20px;
+      height: 16px;
+      color: var(--text-heading);
+    }
+    .command-header-left h2 {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      color: var(--text-heading);
+    }
+    .command-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .command-dots span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .command-dots .dot-coral { background: rgba(255, 180, 171, 0.4); }
+    .command-dots .dot-cyan { background: rgba(189, 244, 255, 0.4); }
+    .command-dots .dot-purple { background: rgba(207, 188, 255, 0.4); }
+    .command-terminal {
+      background: var(--bg-dark);
+      border-left: 3px solid var(--purple-light);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      padding: 32px;
+      max-width: 1024px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      line-height: 22.75px;
+    }
+    .command-terminal .prompt {
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .command-terminal .output { color: var(--text-body); }
+    .command-terminal .heading {
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+    .command-terminal .tag-active {
+      display: inline-block;
+      background: rgba(0, 227, 253, 0.15);
+      color: var(--cyan-bright);
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .command-terminal .tag-done {
+      display: inline-block;
+      background: rgba(207, 188, 255, 0.15);
+      color: var(--purple-light);
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .command-terminal .tag-pending {
+      display: inline-block;
+      background: rgba(146, 143, 158, 0.1);
+      color: var(--text-muted);
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .command-terminal .progress-bar {
+      display: inline-block;
+      width: 160px;
+      height: 6px;
+      background: rgba(146, 143, 158, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      vertical-align: middle;
+    }
+    .command-terminal .progress-fill {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple-light), var(--purple-mid));
+      border-radius: 3px;
+    }
+    .terminal-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 4px 0;
+      flex-wrap: wrap;
+    }
+    .terminal-label {
+      min-width: 140px;
+      color: var(--text-body);
+    }
+
+    /* ── Section: Committee ── */
+    .committee-header {
+      margin-bottom: 48px;
+    }
+    .committee-header h2 {
+      font-family: 'Manrope', sans-serif;
+      font-weight: 700;
+      font-size: 48px;
+      color: var(--text-heading);
+      letter-spacing: -1.2px;
+      margin-bottom: 16px;
+    }
+    .committee-header p {
+      font-size: 18px;
+      color: var(--text-body);
+      max-width: 600px;
+    }
+    .committee-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .committee-opus-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: rgba(170, 138, 255, 0.08);
+      border: 1px solid rgba(170, 138, 255, 0.15);
+      border-radius: 12px;
+      padding: 16px 20px;
+      flex-shrink: 0;
+    }
+    .committee-opus-badge .icon { font-size: 28px; }
+    .committee-opus-badge .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--purple-light);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .committee-opus-badge .sublabel {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .committee-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .agent-card {
+      background: rgba(31, 31, 36, 0.4);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 32px;
+      min-height: 281px;
+      position: relative;
+    }
+    .agent-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 22px;
+    }
+    .agent-icon--purple { background: rgba(170, 138, 255, 0.1); }
+    .agent-icon--cyan { background: rgba(0, 227, 253, 0.1); }
+    .agent-icon--pink { background: rgba(255, 171, 243, 0.1); }
+    .agent-icon--coral { background: rgba(255, 180, 171, 0.1); }
+    .agent-icon--green { background: rgba(189, 244, 130, 0.1); }
+
+    .agent-card h3 {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 24px;
+      color: var(--text-heading);
+      margin-bottom: 8px;
+    }
+    .agent-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .agent-tag--purple { background: rgba(170, 138, 255, 0.2); color: var(--purple-mid); }
+    .agent-tag--cyan { background: rgba(0, 227, 253, 0.2); color: var(--cyan-bright); }
+    .agent-tag--pink { background: rgba(255, 171, 243, 0.2); color: var(--pink); }
+    .agent-tag--coral { background: rgba(255, 180, 171, 0.2); color: var(--coral); }
+    .agent-tag--green { background: rgba(189, 244, 130, 0.2); color: #bdf482; }
+
+    .agent-card p {
+      font-size: 14px;
+      color: var(--text-body);
+      line-height: 22.75px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      background: var(--bg-dark);
+      border-top: 1px solid rgba(207, 188, 255, 0.05);
+      padding: 48px 32px;
+    }
+    .footer-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-copy {
+      font-size: 12px;
+      color: #64748b;
+    }
+    .footer-links {
+      display: flex;
+      gap: 32px;
+    }
+    .footer-links a {
+      font-size: 12px;
+      color: #475569;
+      text-decoration: underline;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    .footer-links a:hover { opacity: 1; }
+    .footer-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .footer-meta svg {
+      width: 16px;
+      height: 20px;
+      color: var(--text-muted);
+    }
+    .footer-meta span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1024px) {
+      .gap-grid { grid-template-columns: 1fr; }
+      .flow-grid { grid-template-columns: repeat(2, 1fr); }
+      .committee-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-title { font-size: 72px; letter-spacing: -3px; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 640px) {
+      .flow-grid { grid-template-columns: 1fr; }
+      .committee-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 48px; letter-spacing: -2px; }
+      .hero-subtitle { font-size: 18px; }
+      .hero-install code { font-size: 13px; }
+      .gap-title { font-size: 32px; }
+      .gap-quote { font-size: 18px; }
+      .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+      .hero-badges { flex-wrap: wrap; justify-content: center; }
+      .committee-header-top { flex-direction: column; gap: 24px; }
+      .section { padding: 80px 20px; }
+    }
+
+    /* ── Animations ── */
+    @media (prefers-reduced-motion: no-preference) {
+      .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="#" class="nav-logo">Gang</a>
+    <ul class="nav-links">
+      <li><a href="#gap" class="active">The Gap</a></li>
+      <li><a href="#flow">How It Works</a></li>
+      <li><a href="#committee">The Committee</a></li>
+      <li><a href="#status">Status</a></li>
+      <li><a href="https://github.com/ebnrdwan/GangPlugin" target="_blank">Docs</a></li>
+    </ul>
+    <a href="#install" class="nav-cta">Quick Start</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero" id="top">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span class="hero-badge-text">V1.1.0 Sovereign Intelligence</span>
+      </div>
+      <h1 class="hero-title">Gang</h1>
+      <p class="hero-subtitle">
+        The multi-agent business committee for Claude Code.<br>
+        Ensuring your architectural precision meets market sovereignty.
+      </p>
+      <div class="hero-install" id="install">
+        <code>npm install -g @claude-gang/cli</code>
+        <button class="hero-install-copy" onclick="navigator.clipboard.writeText('npm install -g @claude-gang/cli')" title="Copy to clipboard">
+          <svg viewBox="0 0 17 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="4" width="11" height="14" rx="2"/>
+            <path d="M1 14V3a2 2 0 012-2h8"/>
+          </svg>
+        </button>
+      </div>
+      <div class="hero-badges">
+        <div class="badge">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 7l2 2 4-4"/><circle cx="7" cy="7" r="6"/></svg>
+          <span>Expert Vetted</span>
+        </div>
+        <div class="badge">
+          <svg viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3l6 4 6-4M1 3v6a2 2 0 002 2h8a2 2 0 002-2V3M1 3a2 2 0 012-2h8a2 2 0 012 2"/></svg>
+          <span>Claude Code Native</span>
+        </div>
+        <div class="badge">
+          <svg viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 1L1 4v4c0 3.3 2.1 5.3 5 6 2.9-.7 5-2.7 5-6V4L6 1z"/></svg>
+          <span>Secure Governance</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Gap -->
+  <section class="section section--alt" id="gap">
+    <div class="container">
+      <div class="gap-grid">
+        <div class="fade-in">
+          <h2 class="gap-title">The Gap: <span class="highlight">Architectural<br>Blindness</span></h2>
+          <p class="gap-text">
+            Developers often build perfect solutions for the wrong problems.
+            "Gang" bridges the abyss between technical execution and
+            executive strategy.
+          </p>
+          <blockquote class="gap-quote">
+            "The most dangerous path is the one paved
+            with brilliant code that serves no market
+            purpose."
+          </blockquote>
+        </div>
+        <div class="gap-visual fade-in">
+          <div class="gap-visual-glow"></div>
+          <div class="gap-visual-card">
+            <div class="gap-visual-inner">
+              <div class="icon">&#9878;&#65039;</div>
+              <div class="label">Strategic Alignment</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Strategy Flow -->
+  <section class="section" id="flow">
+    <div class="container">
+      <div class="flow-header fade-in">
+        <h2>The Strategy Flow</h2>
+        <p>Autonomous consensus across the technical-business spectrum.</p>
+      </div>
+      <div class="flow-grid">
+        <div class="flow-card flow-card--1 fade-in">
+          <div class="flow-card-number">01</div>
+          <div class="flow-card-title">Ingestion</div>
+          <p class="flow-card-desc">Gang scrapes your local repository and Claude Code conversation context.</p>
+        </div>
+        <div class="flow-card flow-card--2 fade-in">
+          <div class="flow-card-number">02</div>
+          <div class="flow-card-title">Deliberation</div>
+          <p class="flow-card-desc">Six specialized agents argue from their unique business perspectives.</p>
+        </div>
+        <div class="flow-card flow-card--3 fade-in">
+          <div class="flow-card-number">03</div>
+          <div class="flow-card-title">Resolution</div>
+          <p class="flow-card-desc">The CEO Advisor synthesizes conflict into a coherent strategic roadmap.</p>
+        </div>
+        <div class="flow-card flow-card--4 fade-in">
+          <div class="flow-card-number">04</div>
+          <div class="flow-card-title">Execution</div>
+          <p class="flow-card-desc">Receive structured markdown report or direct Claude Code task injection.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Command Center -->
+  <section class="section section--alt" id="status">
+    <div class="container" style="max-width:1024px;">
+      <div class="command-header fade-in">
+        <div class="command-header-left">
+          <svg viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="1" width="18" height="14" rx="2"/>
+            <path d="M5 5l3 3-3 3"/>
+            <line x1="11" y1="11" x2="15" y2="11"/>
+          </svg>
+          <h2>Command Center</h2>
+        </div>
+        <div class="command-dots">
+          <span class="dot-coral"></span>
+          <span class="dot-cyan"></span>
+          <span class="dot-purple"></span>
+        </div>
+      </div>
+      <div class="command-terminal fade-in">
+        <div class="prompt">$ /gang status --verbose</div>
+        <br>
+        <div class="output">
+          <div class="heading" style="margin-bottom:12px;">GANG INITIALIZED: Committee Session...</div>
+          <div style="color:var(--text-muted);margin-bottom:16px;">Init Connection to Claude Code EdgeSocket [agent-to-agent mesh]</div>
+          <div class="terminal-row">
+            <span class="terminal-label" style="color:var(--text-heading)">Product Manager</span>
+            <span class="tag-active">ACTIVE</span>
+            <span class="terminal-label" style="color:var(--text-heading)">AI Strategist</span>
+            <span class="tag-active">ACTIVE</span>
+          </div>
+          <div class="terminal-row">
+            <span class="terminal-label" style="color:var(--text-heading)">Finance Lead</span>
+            <span class="tag-done" style="background:rgba(0,227,253,0.15);color:var(--cyan-bright);">BRIEFING</span>
+            <span class="terminal-label" style="color:var(--text-heading)">Market Intel</span>
+            <span class="tag-done">ANALYSIS</span>
+          </div>
+          <div class="terminal-row" style="margin-top:16px;">
+            <span class="terminal-label">Analytical Progress</span>
+            <span class="progress-bar" style="width:200px;"><span class="progress-fill" style="width:72%;"></span></span>
+            <span style="color:var(--purple-light);font-size:12px;">72%</span>
+          </div>
+          <div style="color:var(--text-muted);margin-top:16px;font-size:12px;">
+            Status: PHASE_02: All deliberation includes adversarial stress tests on Industry model Assumptions. Generating Risk mapping solutions..
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Executive Committee -->
+  <section class="section" id="committee">
+    <div class="container">
+      <div class="committee-header fade-in">
+        <div class="committee-header-top">
+          <div>
+            <h2>The Executive Committee</h2>
+            <p>Each agent is prototyped with a distinct professional persona, covering risks, focus, and goal alignments.</p>
+          </div>
+          <div class="committee-opus-badge">
+            <span class="icon">&#128081;</span>
+            <span class="label">CEO/CTO Advisor</span>
+            <span class="sublabel">runs on Claude Opus</span>
+          </div>
+        </div>
+      </div>
+      <div class="committee-grid">
+        <!-- Product Manager -->
+        <div class="agent-card fade-in">
+          <div class="agent-icon agent-icon--purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aa8aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+          </div>
+          <h3>Product Manager</h3>
+          <span class="agent-tag agent-tag--purple">Prioritization</span>
+          <p>Delivers the 'What' and 'Why': Focuses on MVP scope, RICE scoring, and user-story discovery.</p>
+        </div>
+
+        <!-- Market Analyst -->
+        <div class="agent-card fade-in">
+          <div class="agent-icon agent-icon--cyan">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e3fd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </div>
+          <h3>Market Analyst</h3>
+          <span class="agent-tag agent-tag--cyan">Intelligence</span>
+          <p>Analyzes external trends, competitive positioning, and market-fit readiness.</p>
+        </div>
+
+        <!-- UX Strategist -->
+        <div class="agent-card fade-in">
+          <div class="agent-icon agent-icon--pink">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffabf3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+          </div>
+          <h3>UX Strategist</h3>
+          <span class="agent-tag agent-tag--pink">Experience</span>
+          <p>Advocates for the customer: Develops complex interaction flows and persona-driven solutions.</p>
+        </div>
+
+        <!-- Finance Lead -->
+        <div class="agent-card fade-in">
+          <div class="agent-icon agent-icon--coral">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffb4ab" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <h3>Finance Lead</h3>
+          <span class="agent-tag agent-tag--coral">Risk Analysis</span>
+          <p>Evaluates cost projections, resource allocation, and ROI of each proposed development sprint.</p>
+        </div>
+
+        <!-- Solution Architect -->
+        <div class="agent-card fade-in">
+          <div class="agent-icon agent-icon--purple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aa8aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="6 8 10 12 6 16"/><line x1="13" y1="16" x2="18" y2="16"/></svg>
+          </div>
+          <h3>Solution Architect</h3>
+          <span class="agent-tag agent-tag--purple">Scalability</span>
+          <p>Ensures the proposed code patterns are sustainable, maintainable, and highly performant.</p>
+        </div>
+
+        <!-- Business Operations -->
+        <div class="agent-card fade-in">
+          <div class="agent-icon agent-icon--cyan">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e3fd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <h3>Business Operations</h3>
+          <span class="agent-tag agent-tag--cyan">Compliance</span>
+          <p>Focuses on legal compliance, internal process alignment, and high-level stakeholder reporting.</p>
+        </div>
+
+        <!-- Domain Expert (Optional) -->
+        <div class="agent-card fade-in" style="border-color: rgba(249, 115, 22, 0.25);">
+          <div class="agent-icon" style="background: rgba(249, 115, 22, 0.08); border-color: rgba(249, 115, 22, 0.2);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+          </div>
+          <h3>Domain Expert <span style="font-size: 11px; opacity: 0.6; font-weight: 400;">(Optional)</span></h3>
+          <span class="agent-tag" style="background: rgba(249, 115, 22, 0.1); color: #f97316; border-color: rgba(249, 115, 22, 0.2);">Industry SME</span>
+          <p>User-configurable industry specialist. Validates assumptions against real-world domain knowledge — regulatory, benchmarks, and table-stakes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span class="footer-copy">&copy; 2025 Gang Executive Committee. All rights reserved.</span>
+      <div class="footer-links">
+        <a href="https://github.com/ebnrdwan/GangPlugin">Architecture</a>
+        <a href="https://github.com/ebnrdwan/GangPlugin">Governance</a>
+        <a href="https://github.com/ebnrdwan/GangPlugin">Security</a>
+        <a href="https://github.com/ebnrdwan">Contact</a>
+      </div>
+      <div class="footer-meta">
+        <svg viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v18M1 8l7-7 7 7"/></svg>
+        <span>Sovereign Intelligence Protocol</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll animation -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+
+</body>
+</html>

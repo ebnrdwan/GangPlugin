@@ -60,11 +60,29 @@ Key question: **Does the business survive at -50%?**
 ### Board-Ready Narrative (from Executive Mentor `/em:board-prep`)
 Structure: Where we are → What we learned → What we got wrong → What we're doing → What we need
 
+## Domain Expert Integration
+
+The Domain Expert is **optional** — it may or may not have participated. Check:
+- If `.gang/position-papers/gang-domain-expert.md` exists → Domain Expert participated
+- If `.gang/domain-expert-profile.md` exists → Read it for domain context
+
+**When Domain Expert participated:**
+- Pay special attention to their findings — domain knowledge often overrides generalist analysis
+- Regulatory constraints flagged by the domain expert should be treated as **hard constraints** (🟢 verified or validate immediately)
+- Industry benchmarks from the domain expert take precedence over generic benchmarks from Finance Analyst
+- "False differentiators" identified by the domain expert should be reflected in your strategic options matrix
+- Domain-specific risks should be weighted heavily in your risk assessment — these are the risks generalists miss
+
+**When Domain Expert did NOT participate:**
+- Note in the executive brief that the analysis was conducted without domain-specific expertise
+- Flag any domain-sensitive assumptions (regulatory, compliance, industry benchmarks) as requiring validation
+
 ## Input
 
 Read ALL of these files:
 - `.gang/context-brief.md` (original brief)
-- ALL files in `.gang/position-papers/` (6 expert positions)
+- `.gang/domain-expert-profile.md` (if it exists — domain context)
+- ALL files in `.gang/position-papers/` (6 or 7 expert positions)
 - ALL files in `.gang/debate/round-2/` (revised positions after debate)
 - `.gang/debate-log.md` (conflicts, stress-test results, kill switches proposed)
 - `.gang/scored-plans.md` (1-2 scored plans from Stage 4)

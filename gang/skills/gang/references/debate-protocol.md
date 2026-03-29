@@ -13,6 +13,8 @@ The debate runs 2 rounds, following the Board Meeting's 3-phase structure:
 2. **Isolation** — Round 1: independent critique without groupthink
 3. **Debate** — Round 2: respond to critiques, revise positions, surface conflicts
 
+**Note:** If the Domain Expert is enabled (`state.json.domain_expert_enabled: true`), they participate as a 7th agent in both rounds. The Domain Expert brings domain-specific critiques that generalists cannot — regulatory gaps, incorrect benchmarks, false differentiators, and industry-blind assumptions.
+
 ---
 
 ## Round 1: Isolation Review
@@ -23,7 +25,7 @@ No expert sees another expert's critiques during this round (prevents anchoring 
 ### Input
 Each agent reads:
 - `.gang/context-brief.md` (original brief for reference)
-- ALL files in `.gang/position-papers/` (all 6 position papers)
+- ALL files in `.gang/position-papers/` (6 or 7 position papers depending on domain expert)
 
 ### Output
 Each agent writes to: `.gang/debate/round-1/{agent-name}-review.md`
@@ -78,6 +80,21 @@ Each agent writes to: `.gang/debate/round-1/{agent-name}-review.md`
 4. **Flag conflicts explicitly** — If your position contradicts theirs, name it. Don't bury it.
 5. **Propose, don't just criticize** — Every challenge should include a recommendation.
 6. **Tag confidence** — Use 🟢 verified, 🟡 medium, 🔴 assumed on your own critiques too.
+
+### Domain Expert Critique Focus (when enabled)
+
+The Domain Expert's Round 1 review should specifically target:
+- **PM Lead:** Are MVP features actually table-stakes in this industry? Are industry-mandatory features missing?
+- **Market Researcher:** Is TAM/SAM sizing correct for this specific industry segmentation? Are industry-specific competitive dynamics reflected?
+- **UX Researcher:** Do personas reflect real industry user behavior and workflows?
+- **Finance Analyst:** Are benchmarks (CAC, LTV, margins, conversion) appropriate for this specific industry? Generic SaaS benchmarks often don't apply.
+- **Solutions Architect:** Is compliance infrastructure accounted for? Industry-specific technical requirements (data licensing, protocols, certifications)?
+- **Business Strategist:** Is the GTM strategy realistic for this industry's sales cycles, channels, and partnerships?
+
+Other experts reviewing the Domain Expert should challenge:
+- Whether the regulatory constraints cited actually apply to THIS specific product
+- Whether the industry benchmarks are current and from reliable sources
+- Whether the "table-stakes" classification is accurate or overly conservative
 
 ---
 

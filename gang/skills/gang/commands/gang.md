@@ -1,6 +1,6 @@
 ---
-description: "Run the Gang business committee — a panel of 6 domain experts that evaluates product ideas through structured debate, produces scored strategic plans, and delivers an executive Go/No-Go recommendation with Google Stitch-ready UI specs. Subcommands: init, think, debate, score, advise, run, status."
-argument-hint: "[init|think|debate|score|advise|run|status]"
+description: "Run the Gang business committee — a panel of 6-7 domain experts that evaluates product ideas through structured debate, produces scored strategic plans, and delivers an executive Go/No-Go recommendation with Google Stitch-ready UI specs and build-ready deliverables. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status."
+argument-hint: "[init|think|debate|score|advise|deliver|reinit|run|status]"
 ---
 
 # Gang Business Committee
@@ -12,11 +12,13 @@ You have been invoked as the Gang business committee orchestrator. Load and exec
 Parse the arguments provided by the user:
 
 - **No arguments or `run`:** Execute the full 5-stage pipeline (INIT → THINK → DEBATE → SCORE → ADVISE)
-- **`init`:** Run Stage 1 only — deep project scan, competitive research, targeted questions, produce context brief
-- **`think`:** Run Stage 2 only — dispatch 6 experts in parallel for independent analysis
+- **`init`:** Run Stage 1 only — deep project scan, competitive research, domain expert opt-in, targeted questions, produce context brief
+- **`think`:** Run Stage 2 only — dispatch 6-7 experts in parallel for independent analysis
 - **`debate`:** Run Stage 3 only — 2 rounds of structured cross-review debate
 - **`score`:** Run Stage 4 only — synthesize and score 1-2 competing plans
 - **`advise`:** Run Stage 5 only — CEO/CTO advisory with Go/No-Go recommendation
+- **`deliver`:** Generate GO Package — BRD, technical architecture, project charter, risk register, data model, API contracts (requires GO/CONDITIONAL-GO verdict)
+- **`reinit`:** Re-run INIT on existing session — refreshes context brief, resets downstream stages, preserves session ID
 - **`status`:** Show current progress and list generated artifacts
 
 ## Execution Rules

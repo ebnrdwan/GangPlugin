@@ -1,12 +1,12 @@
 ---
 name: gang
-description: "Multi-agent business committee that evaluates product ideas through structured expert debate. Use when: the user wants to evaluate a business idea, product concept, or strategic initiative; needs multi-perspective analysis (product, market, UX, finance, tech, strategy); wants scored strategic plans with Go/No-Go recommendation; needs Google Stitch-ready UI specifications; or asks to 'run a gang review', 'evaluate this idea', 'should we build this'. Subcommands: init, think, debate, score, advise, run, status."
-version: 1.1.0
+description: "Multi-agent business committee that evaluates product ideas through structured expert debate. Use when: the user wants to evaluate a business idea, product concept, or strategic initiative; needs multi-perspective analysis (product, market, UX, finance, tech, strategy); wants scored strategic plans with Go/No-Go recommendation; needs Google Stitch-ready UI specifications; or asks to 'run a gang review', 'evaluate this idea', 'should we build this'. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status."
+version: 1.2.0
 ---
 
 # Gang — Multi-Agent Business Committee
 
-A 5-stage pipeline that orchestrates 6 domain experts + 1 CEO/CTO advisor through structured debate to produce scored strategic plans and executive-ready recommendations.
+A 5-stage pipeline that orchestrates 6 domain experts + 1 optional Domain Expert + 1 CEO/CTO advisor through structured debate to produce scored strategic plans and executive-ready recommendations. When the verdict is GO, a deliverables stage generates build-ready documents (BRD, architecture, charter, risk register, data model, API contracts).
 
 ## Subcommand Router
 
@@ -20,6 +20,8 @@ Parse the user's command to determine which stage(s) to run:
 | `/gang debate` | Stage 3 only — cross-review debate |
 | `/gang score` | Stage 4 only — plan synthesis and scoring |
 | `/gang advise` | Stage 5 only — CEO/CTO advisory |
+| `/gang deliver` | Generate GO Package (BRD, architecture, charter, etc.) — requires GO/CONDITIONAL-GO verdict |
+| `/gang reinit` | Re-run INIT on existing session — refreshes context, resets downstream stages |
 | `/gang status` | Show current progress from `.gang/state.json` |
 
 For stages 2-5, check that prerequisite stages are complete by reading `.gang/state.json`.
@@ -148,6 +150,25 @@ NOW ask questions — but only what you couldn't determine from the codebase sca
 - Adapt options to be specific to THIS project and THIS market
 - Reference what you found: "Based on the codebase, it looks like you're targeting retail traders — is that right?"
 
+**Round 0 — Domain Expert (1 question, always ask):**
+
+Question 0 — "Include a Domain Expert?"
+- Header: "Domain Expert (Optional)"
+- Context: "I detected this project operates in the **{detected domain}** domain. A Domain Expert adds an industry SME who validates assumptions against real-world domain knowledge — catching regulatory gaps, incorrect benchmarks, and industry-blind spots."
+- Options:
+  - "Yes, include Domain Expert" — "Add an industry SME for {detected domain} who participates in all stages"
+  - "No, skip Domain Expert" — "Proceed with the 6 generalist experts only"
+
+**If yes:**
+1. Auto-generate `.gang/domain-expert-profile.md` using the template at `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/domain-expert-template.md`. Fill it based on the project scan + competitive research.
+2. Show the draft to the user: "Here's the domain profile I've drafted. Want to refine it?"
+3. If the user provides edits, update the profile.
+4. Update `.gang/state.json`: set `"domain_expert_enabled": true`
+
+**If no:**
+1. Update `.gang/state.json`: set `"domain_expert_enabled": false`
+2. Skip domain profile generation entirely.
+
 **Round 1 — Initiative & Strategy (3-4 questions max):**
 
 Question 1 — "What should the committee focus on?"
@@ -263,11 +284,15 @@ Update `.gang/state.json`: add "init" to `stages_completed`, set `current_stage`
 
 ## Stage 2 — THINK (Parallel Expert Analysis)
 
-**Goal:** 6 experts independently analyze the context brief and produce position papers.
+**Goal:** 6 (or 7 with Domain Expert) experts independently analyze the context brief and produce position papers.
 
-### Dispatch All 6 Experts in Parallel
+### Check Domain Expert Status
 
-Use the Agent tool to dispatch ALL 6 agents in a SINGLE message (parallel execution):
+Read `.gang/state.json` and check `domain_expert_enabled`.
+
+### Dispatch All Experts in Parallel
+
+Use the Agent tool to dispatch ALL agents in a SINGLE message (parallel execution):
 
 For each agent, provide this prompt template (customize the agent name):
 
@@ -278,8 +303,10 @@ For each agent, provide this prompt template (customize the agent name):
 > Also read the debate protocol at `{plugin_root}/skills/gang/references/debate-protocol.md` — you will need it in the next stage.
 >
 > {For gang-ux-researcher only: Also produce all 9 UX deliverable files in `.gang/ux-deliverables/`. Read the Impeccable design rules at `{plugin_root}/skills/gang/references/impeccable-design-rules.md` and the Stitch template at `{plugin_root}/skills/gang/references/stitch-prompt-template.md`.}
+>
+> {For gang-domain-expert only: Read your domain profile at `.gang/domain-expert-profile.md` and adopt that persona. Your position paper should validate/challenge the other experts' assumptions from an industry insider perspective.}
 
-**Agents to dispatch:**
+**Agents to dispatch (always):**
 1. `gang-pm-lead` — scope, RICE, requirements, MVP
 2. `gang-market-researcher` — TAM/SAM/SOM, competitive, trends, SWOT
 3. `gang-ux-researcher` — personas, JTBD, journeys, design tokens, Stitch instructions
@@ -287,10 +314,13 @@ For each agent, provide this prompt template (customize the agent name):
 5. `gang-solutions-architect` — feasibility, architecture, tech stack, build-vs-buy
 6. `gang-business-strategist` — positioning, GTM, business model, moat, pricing
 
+**Conditional (only if `domain_expert_enabled` is true):**
+7. `gang-domain-expert` — domain reality check, regulatory landscape, industry benchmarks, table-stakes vs differentiators
+
 ### After Dispatch
 
-Once all 6 agents complete:
-1. Verify all 6 position papers exist in `.gang/position-papers/`
+Once all agents complete:
+1. Verify all position papers exist in `.gang/position-papers/` (6 or 7 depending on domain expert)
 2. Verify UX deliverables exist in `.gang/ux-deliverables/` (9 files)
 3. Present a summary to the user: which experts completed, key headline from each position paper
 4. Update `.gang/state.json`: add "think" to `stages_completed`, set `current_stage` to "debate"
@@ -303,9 +333,13 @@ Once all 6 agents complete:
 
 The debate follows the Board Meeting 3-phase protocol (Framing → Isolation → Debate) combined with Executive Mentor adversarial patterns. See `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/debate-protocol.md` for full rules.
 
+### Check Domain Expert Status
+
+Read `.gang/state.json` and check `domain_expert_enabled`. If true, include `gang-domain-expert` in both rounds.
+
 ### Round 1: Isolation Review
 
-Dispatch all 6 agents in parallel. Each agent's prompt:
+Dispatch all agents in parallel (6 or 7 depending on domain expert). Each agent's prompt:
 
 > You are in Stage 3 Round 1 of the Gang debate. Read the debate protocol at `{plugin_root}/skills/gang/references/debate-protocol.md`.
 >
@@ -316,10 +350,12 @@ Dispatch all 6 agents in parallel. Each agent's prompt:
 > Identify the top 3 cross-cutting assumptions that need stress-testing.
 >
 > Write your complete review to `.gang/debate/round-1/{agent-name}-review.md`.
+>
+> {For gang-domain-expert only: Focus your critique on domain-specific blind spots — regulatory gaps, incorrect industry benchmarks, false differentiators, and table-stakes features that other experts may have treated as novel.}
 
 ### Round 2: Debate & Revision
 
-After Round 1 completes, dispatch all 6 agents in parallel. Each agent's prompt:
+After Round 1 completes, dispatch all agents in parallel (6 or 7). Each agent's prompt:
 
 > You are in Stage 3 Round 2 of the Gang debate. Read the debate protocol at `{plugin_root}/skills/gang/references/debate-protocol.md`.
 >
@@ -362,7 +398,7 @@ If there were significant unresolved conflicts, produce 2 distinct plans represe
 
 ### Score Each Plan
 
-Score on 5 dimensions (1-10 scale + confidence percentage):
+Score on 5 dimensions (or 6 if Domain Expert is enabled — check `state.json.domain_expert_enabled`):
 
 | Dimension | Description | Score Sources |
 |-----------|-------------|--------------|
@@ -371,6 +407,7 @@ Score on 5 dimensions (1-10 scale + confidence percentage):
 | Technical Feasibility | Can we build it? In the proposed timeline? | Solutions Architect |
 | Financial Viability | Does the math work? Is ROI acceptable? | Finance/Risk Analyst |
 | Strategic Alignment | Does this fit our strategy? Is it defensible? | Business Strategist + PM Lead |
+| Domain Fit *(only if domain expert enabled)* | Does it respect industry realities? Regulatory, benchmarks, table-stakes? | Domain Expert |
 
 ### Output
 
@@ -429,10 +466,13 @@ Use the Agent tool to dispatch `gang-ceo-cto-advisor` (runs on Opus for deepest 
 >
 > Read ALL of these files:
 > - `.gang/context-brief.md`
-> - All files in `.gang/position-papers/`
-> - All files in `.gang/debate/round-2/`
+> - All files in `.gang/position-papers/` (including domain expert if present)
+> - All files in `.gang/debate/round-2/` (including domain expert if present)
 > - `.gang/debate-log.md`
 > - `.gang/scored-plans.md`
+> - `.gang/domain-expert-profile.md` (if it exists — gives you the domain context)
+>
+> If a Domain Expert participated, pay special attention to their domain-specific findings — regulatory constraints, industry benchmarks, and table-stakes vs differentiators. Domain knowledge often overrides generalist analysis.
 >
 > Produce your executive brief following your agent instructions exactly.
 > Write to `.gang/executive-brief.md`.
@@ -447,7 +487,8 @@ After the advisor completes:
    - **Kill switches** (the decision checkpoints)
    - **Quick wins** (what to do first)
 3. Remind the user about the UX deliverables: "Google Stitch instructions are at `.gang/ux-deliverables/stitch-instructions.md`"
-4. Enter interactive mode: "Ask me anything about the committee's findings."
+4. If verdict is GO or CONDITIONAL-GO, suggest: "Run `/gang deliver` to generate the GO Package — BRD, technical architecture, project charter, risk register, data model, and API contracts."
+5. Enter interactive mode: "Ask me anything about the committee's findings."
 
 Update `.gang/state.json`: add "advise" to `stages_completed`, set `current_stage` to "complete".
 
@@ -466,25 +507,107 @@ Gang Committee Status
 ━━━━━━━━━━━━━━━━━━━━
 Session: {session_id}
 Started: {started_at}
+Domain Expert: {enabled / disabled}
 
 [✓] Stage 1: INIT — Context brief ready
-[✓] Stage 2: THINK — 6/6 position papers complete
+[✓] Stage 2: THINK — {6 or 7}/{6 or 7} position papers complete
 [→] Stage 3: DEBATE — Round 1 complete, Round 2 in progress
 [ ] Stage 4: SCORE — Not started
 [ ] Stage 5: ADVISE — Not started
+[ ] Stage 6: DELIVER — Not started (requires GO verdict)
 
 Artifacts:
   .gang/context-brief.md .............. ✓
-  .gang/position-papers/ .............. 6 files
+  .gang/domain-expert-profile.md ...... {✓ / N/A}
+  .gang/competitive-scan.md ........... ✓
+  .gang/position-papers/ .............. {6 or 7} files
   .gang/ux-deliverables/ .............. 9 files
-  .gang/debate/round-1/ ............... 6 files
+  .gang/debate/round-1/ ............... {6 or 7} files
   .gang/debate/round-2/ ............... 0 files
   .gang/debate-log.md ................. pending
   .gang/scored-plans.md ............... pending
   .gang/executive-brief.md ............ pending
+  .gang/go-package/ ................... pending
 
 Next: Run /gang debate to continue
 ```
+
+---
+
+## DELIVER Command — GO Package Generation
+
+When the user runs `/gang deliver`:
+
+### Pre-Check
+
+1. Read `.gang/state.json` — verify "advise" is in `stages_completed`
+2. Read `.gang/executive-brief.md` — check the verdict
+3. If verdict is **NO-GO**: inform the user that GO Package is only generated for GO or CONDITIONAL-GO verdicts. Suggest running `/gang reinit` if conditions have changed.
+4. If verdict is **GO** or **CONDITIONAL-GO**: proceed.
+
+### Dispatch Deliverables Writer
+
+Use the Agent tool to dispatch `gang-deliverables-writer`:
+
+> You are the Deliverables Writer for the Gang business committee. Generate the GO Package.
+>
+> Read ALL committee artifacts:
+> - `.gang/context-brief.md`
+> - All files in `.gang/position-papers/`
+> - All files in `.gang/debate/round-2/`
+> - `.gang/debate-log.md`
+> - `.gang/scored-plans.md`
+> - `.gang/executive-brief.md`
+> - `.gang/domain-expert-profile.md` (if it exists)
+> - All files in `.gang/ux-deliverables/`
+>
+> Generate all 6 documents following your agent instructions. Write to `.gang/go-package/`.
+
+### After Dispatch
+
+1. Verify all 6 documents exist in `.gang/go-package/`
+2. Present a summary to the user: list each document with its key highlights
+3. Update `.gang/state.json`: add "deliver" to `stages_completed`
+
+---
+
+## REINIT Command — Re-run INIT
+
+When the user runs `/gang reinit`:
+
+### Purpose
+
+Re-runs the INIT stage on an existing session, refreshing the context brief with updated project knowledge. Useful when:
+- The codebase has changed since the last INIT
+- The user wants to enable/disable the Domain Expert
+- Competitive landscape needs refreshing
+- Requirements have shifted
+
+### Steps
+
+1. **Check state:** Read `.gang/state.json` — verify it exists (session must be active). If no session exists, suggest `/gang init` instead.
+
+2. **Preserve session:** Keep the same `session_id` — this is a refresh, not a new evaluation.
+
+3. **Re-run INIT Steps 2-6:** Execute the full INIT flow (deep scan, competitive research, domain expert question, targeted questions, context brief) — but:
+   - Present existing answers as context: "Last time you said {X} — still accurate?"
+   - Allow the user to change their domain expert preference
+   - Allow the user to update their answers
+
+4. **Overwrite artifacts:** Replace `.gang/context-brief.md`, `.gang/competitive-scan.md`, and `.gang/domain-expert-profile.md` (if applicable) with fresh versions.
+
+5. **Reset downstream stages:** Update `.gang/state.json`:
+   ```json
+   {
+     "stages_completed": ["init"],
+     "current_stage": "think",
+     "reinit_count": {previous + 1},
+     "last_reinit": "{ISO-8601 timestamp}"
+   }
+   ```
+   Keep `session_id` and `started_at` unchanged.
+
+6. **Inform the user:** "Context refreshed. Downstream stages (THINK, DEBATE, SCORE, ADVISE) have been reset. Run `/gang think` to continue with the updated context."
 
 ---
 

@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJMMyA3djEwbDkgNSA5LTVWN2wtOS01eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=" alt="Claude Code Plugin">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/agents-7-orange?style=for-the-badge" alt="Agents">
+  <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/agents-7+1_optional-orange?style=for-the-badge" alt="Agents">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
 </p>
 
@@ -9,9 +9,9 @@
 <h3 align="center">Multi-Agent Business Committee for Claude Code</h3>
 
 <p align="center">
-  <strong>One command. Six experts. One verdict.</strong><br/>
-  Turn your IDE into a boardroom — 6 domain experts analyze, debate, and score your product idea,<br/>
-  then a CEO/CTO advisor delivers a Go/No-Go recommendation.
+  <strong>One command. Seven experts. One verdict.</strong><br/>
+  Turn your IDE into a boardroom — 6 experts + 1 optional Domain Expert analyze, debate, and score your product idea,<br/>
+  then a CEO/CTO advisor delivers a Go/No-Go recommendation with build-ready deliverables.
 </p>
 
 <p align="center">
@@ -57,16 +57,18 @@ Gang embeds a complete business evaluation pipeline in your development environm
 
 ```mermaid
 graph LR
-    A["🔍 INIT<br/>Scan + Research"] --> B["🧠 THINK<br/>6 Experts"]
+    A["🔍 INIT<br/>Scan + Research"] --> B["🧠 THINK<br/>6-7 Experts"]
     B --> C["⚔️ DEBATE<br/>2 Rounds"]
-    C --> D["📊 SCORE<br/>5 Dimensions"]
+    C --> D["📊 SCORE<br/>5-6 Dimensions"]
     D --> E["👔 ADVISE<br/>Go / No-Go"]
+    E --> F["📦 DELIVER<br/>GO Package"]
 
     style A fill:#6366f1,stroke:#4f46e5,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style C fill:#a855f7,stroke:#9333ea,color:#fff
     style D fill:#c084fc,stroke:#a855f7,color:#fff
     style E fill:#d946ef,stroke:#c026d3,color:#fff
+    style F fill:#f97316,stroke:#ea580c,color:#fff
 ```
 
 Run `/gang status` at any point to track progress:
@@ -110,6 +112,7 @@ graph TB
         FA["💰 Finance Analyst<br/>DCF · SaaS Metrics"]
         SA["🏗️ Solutions Architect<br/>Feasibility · TCO"]
         BS["📈 Business Strategist<br/>GTM · Moat · Pricing"]
+        DE["🔬 Domain Expert<br/>Industry SME (Optional)"]
     end
 
     subgraph "Stage 5 — Final Verdict (Opus)"
@@ -122,6 +125,7 @@ graph TB
     FA --> CEO
     SA --> CEO
     BS --> CEO
+    DE -.-> CEO
 
     style PM fill:#3b82f6,stroke:#2563eb,color:#fff
     style MR fill:#06b6d4,stroke:#0891b2,color:#fff
@@ -129,7 +133,8 @@ graph TB
     style FA fill:#eab308,stroke:#ca8a04,color:#fff
     style SA fill:#d946ef,stroke:#c026d3,color:#fff
     style BS fill:#ef4444,stroke:#dc2626,color:#fff
-    style CEO fill:#f97316,stroke:#ea580c,color:#fff
+    style DE fill:#f97316,stroke:#ea580c,color:#fff
+    style CEO fill:#7c3aed,stroke:#6d28d9,color:#fff
 ```
 
 | Expert | Focus |
@@ -140,6 +145,7 @@ graph TB
 | 💰 **Finance/Risk Analyst** | DCF, SaaS metrics, risk matrix, scenario modeling |
 | 🏗️ **Solutions Architect** | Feasibility, architecture, build-vs-buy TCO |
 | 📈 **Business Strategist** | GTM strategy, business model, competitive moat |
+| 🔬 **Domain Expert** *(optional)* | Industry SME — regulatory, benchmarks, domain-specific risks |
 | 👔 **CEO/CTO Advisor** | Go/No-Go verdict, kill switches, implementation roadmap |
 
 ---

@@ -1,7 +1,7 @@
 {
   "name": "gang",
-  "version": "1.1.0",
-  "description": "Multi-agent business committee that orchestrates domain experts through structured debate to produce scored strategic plans and executive-ready recommendations",
+  "version": "1.2.0",
+  "description": "Multi-agent business committee that orchestrates domain experts through structured debate to produce scored strategic plans, executive-ready recommendations, and build-ready deliverables",
   "author": {
     "name": "ebnrdwan"
   },
@@ -17,6 +17,9 @@
     "finance",
     "architecture",
     "executive-advisory",
-    "google-stitch"
+    "google-stitch",
+    "domain-expert",
+    "brd",
+    "deliverables"
   ]
 }

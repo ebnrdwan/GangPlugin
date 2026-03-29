@@ -1,17 +1,17 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge" alt="Claude Code Plugin">
-  <img src="https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/experts-6+1_CEO-orange?style=for-the-badge" alt="Experts">
-  <img src="https://img.shields.io/badge/stages-5-success?style=for-the-badge" alt="Stages">
+  <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/experts-6+1_optional+CEO-orange?style=for-the-badge" alt="Experts">
+  <img src="https://img.shields.io/badge/stages-5+deliver-success?style=for-the-badge" alt="Stages">
   <img src="https://img.shields.io/badge/Stitch-Ready-FF6F61?style=for-the-badge" alt="Stitch Ready">
 </p>
 
 <h1 align="center">🏛️ Gang — Multi-Agent Business Committee</h1>
 
 <p align="center">
-  <strong>One command. Six experts. One verdict.</strong><br/>
-  Gang turns Claude Code into a boardroom — 6 domain experts independently analyze your product idea,<br/>
-  debate each other's positions, and a CEO/CTO advisor delivers a scored Go/No-Go recommendation.
+  <strong>One command. Seven experts. One verdict.</strong><br/>
+  Gang turns Claude Code into a boardroom — 6 experts + 1 optional Domain Expert independently analyze your product idea,<br/>
+  debate each other's positions, and a CEO/CTO advisor delivers a scored Go/No-Go recommendation with build-ready deliverables.
 </p>
 
 <p align="center">
@@ -44,16 +44,18 @@ Today's AI-assisted development is great at **building** — but terrible at dec
 
 ```mermaid
 graph LR
-    A["🔍 INIT<br/>Deep Scan<br/>+ Market Research"] --> B["🧠 THINK<br/>6 Experts<br/>in Parallel"]
+    A["🔍 INIT<br/>Deep Scan<br/>+ Market Research"] --> B["🧠 THINK<br/>6-7 Experts<br/>in Parallel"]
     B --> C["⚔️ DEBATE<br/>2 Rounds<br/>Cross-Review"]
-    C --> D["📊 SCORE<br/>5 Dimensions<br/>1-10 Scale"]
+    C --> D["📊 SCORE<br/>5-6 Dimensions<br/>1-10 Scale"]
     D --> E["👔 ADVISE<br/>Go / No-Go<br/>+ Roadmap"]
+    E --> F["📦 DELIVER<br/>GO Package<br/>BRD + Architecture"]
 
     style A fill:#6366f1,stroke:#4f46e5,color:#fff
     style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style C fill:#a855f7,stroke:#9333ea,color:#fff
     style D fill:#c084fc,stroke:#a855f7,color:#fff
     style E fill:#d946ef,stroke:#c026d3,color:#fff
+    style F fill:#f97316,stroke:#ea580c,color:#fff
 ```
 
 Run `/gang status` at any point to see exactly where you are:
@@ -63,38 +65,34 @@ Run `/gang status` at any point to see exactly where you are:
 ━━━━━━━━━━━━━━━━━━━━━━━━
 Session: gang-20260329-143022
 Started: 2026-03-29
+Domain Expert: enabled
 
 [✓] Stage 1: INIT — Context brief ready
-[✓] Stage 2: THINK — 6/6 position papers complete
+[✓] Stage 2: THINK — 7/7 position papers complete
 [✓] Stage 3: DEBATE — 2 rounds complete, debate log compiled
 [→] Stage 4: SCORE — Scoring in progress...
 [ ] Stage 5: ADVISE — Not started
+[ ] Stage 6: DELIVER — Not started (requires GO verdict)
 
 Artifacts:
   .gang/context-brief.md .............. ✓
+  .gang/domain-expert-profile.md ...... ✓
   .gang/competitive-scan.md ........... ✓
-  .gang/position-papers/ .............. 6 files ✓
+  .gang/position-papers/ .............. 7 files ✓
     ├── gang-pm-lead.md
     ├── gang-market-researcher.md
     ├── gang-ux-researcher.md
     ├── gang-finance-risk-analyst.md
     ├── gang-solutions-architect.md
-    └── gang-business-strategist.md
+    ├── gang-business-strategist.md
+    └── gang-domain-expert.md
   .gang/ux-deliverables/ .............. 9 files ✓
-    ├── personas.md
-    ├── jobs-to-be-done.md
-    ├── user-journeys.md
-    ├── information-architecture.md
-    ├── wireframes.md
-    ├── design-tokens.md
-    ├── interaction-patterns.md
-    ├── accessibility-notes.md
-    └── stitch-instructions.md
-  .gang/debate/round-1/ ............... 6 files ✓
-  .gang/debate/round-2/ ............... 6 files ✓
+  .gang/debate/round-1/ ............... 7 files ✓
+  .gang/debate/round-2/ ............... 7 files ✓
   .gang/debate-log.md ................. ✓
   .gang/scored-plans.md ............... in progress
   .gang/executive-brief.md ............ pending
+  .gang/go-package/ ................... pending
 
 Next: Waiting for Stage 4 to complete, then run /gang advise
 ```
@@ -175,9 +173,9 @@ Does this look right? Anything I'm missing?
 
 ---
 
-### 🧠 Stage 2 — THINK: Six Experts, Zero Groupthink
+### 🧠 Stage 2 — THINK: Six (or Seven) Experts, Zero Groupthink
 
-Six domain experts analyze independently and in parallel — **no agent sees another's work** (prevents anchoring bias):
+Six core experts (plus an optional Domain Expert) analyze independently and in parallel — **no agent sees another's work** (prevents anchoring bias):
 
 ```mermaid
 graph TB
@@ -187,6 +185,7 @@ graph TB
     CB --> FA["💰 Finance Analyst"]
     CB --> SA["🏗️ Solutions Architect"]
     CB --> BS["📈 Business Strategist"]
+    CB -.-> DE["🔬 Domain Expert<br/>(Optional)"]
 
     PM --> PP1["Position Paper"]
     MR --> PP2["Position Paper"]
@@ -194,6 +193,7 @@ graph TB
     FA --> PP4["Position Paper"]
     SA --> PP5["Position Paper"]
     BS --> PP6["Position Paper"]
+    DE -.-> PP7["Position Paper"]
 
     style CB fill:#1e293b,stroke:#334155,color:#fff
     style PM fill:#3b82f6,stroke:#2563eb,color:#fff
@@ -202,6 +202,7 @@ graph TB
     style FA fill:#eab308,stroke:#ca8a04,color:#fff
     style SA fill:#d946ef,stroke:#c026d3,color:#fff
     style BS fill:#ef4444,stroke:#dc2626,color:#fff
+    style DE fill:#f97316,stroke:#ea580c,color:#fff
 ```
 
 | Expert | Model | What They Produce |
@@ -212,8 +213,9 @@ graph TB
 | 💰 **Finance/Risk Analyst** | Sonnet | DCF valuation, SaaS metrics (ARR/MRR/churn/CAC/LTV/NRR), risk matrix, scenario modeling (base/bull/bear/stress) |
 | 🏗️ **Solutions Architect** | Sonnet | Feasibility scoring, architecture, tech stack evaluation, build-vs-buy TCO, tech debt scoring, DORA metrics, ADRs |
 | 📈 **Business Strategist** | Sonnet | Business Model Canvas, GTM strategy (3 phases), competitive moat, pricing tiers, differentiation analysis |
+| 🔬 **Domain Expert** *(optional)* | Sonnet | Industry SME — regulatory landscape, domain benchmarks, table-stakes vs differentiators, compliance requirements |
 
-All 6 agents run in **a single parallel dispatch** — you see results as each expert finishes:
+All agents run in **a single parallel dispatch** — you see results as each expert finishes:
 
 <details>
 <summary>📋 <strong>Real output: PM Lead on a stock details page</strong></summary>
@@ -322,7 +324,7 @@ graph LR
 
 ### 📊 Stage 4 — SCORE: Quantified Decision Framework
 
-1-2 competing plans scored on **5 dimensions** (1-10 scale + confidence %):
+1-2 competing plans scored on **5-6 dimensions** (1-10 scale + confidence %). A 6th dimension "Domain Fit" is added when the Domain Expert is enabled:
 
 | Dimension | What It Measures | Scored By |
 |-----------|-----------------|-----------|
@@ -331,6 +333,7 @@ graph LR
 | ⚙️ **Technical Feasibility** | Can we build it in the proposed timeline? | Solutions Architect |
 | 💰 **Financial Viability** | Does the math work? Is ROI acceptable? | Finance/Risk Analyst |
 | 🧭 **Strategic Alignment** | Is it defensible? Does it fit our direction? | Business Strategist + PM Lead |
+| 🔬 **Domain Fit** *(optional)* | Does it respect industry realities? | Domain Expert |
 
 <details>
 <summary>📋 <strong>Example score output</strong></summary>
@@ -522,11 +525,13 @@ claude plugin install gang
 /gang run
 
 # Or run stages individually
-/gang init       # 🔍 Deep scan + competitive research + targeted questions
-/gang think      # 🧠 6 experts analyze in parallel
+/gang init       # 🔍 Deep scan + competitive research + domain expert opt-in + questions
+/gang think      # 🧠 6-7 experts analyze in parallel
 /gang debate     # ⚔️ 2 rounds of structured cross-review
 /gang score      # 📊 Synthesize and score competing plans
 /gang advise     # 👔 CEO/CTO executive recommendation
+/gang deliver    # 📦 Generate GO Package (BRD, architecture, charter, risk register)
+/gang reinit     # 🔄 Re-run INIT to refresh context (preserves session)
 /gang status     # 📋 Check progress and list artifacts
 ```
 
@@ -557,14 +562,16 @@ All output is written to `.gang/` in your project directory:
 ├── 📄 state.json                    # Session tracking
 ├── 📄 context-brief.md              # Project understanding + user context
 ├── 📄 competitive-scan.md           # Automated market research
+├── 📄 domain-expert-profile.md      # 🔬 Domain Expert persona (optional)
 │
-├── 📂 position-papers/              # 6 independent expert analyses
+├── 📂 position-papers/              # 6-7 independent expert analyses
 │   ├── gang-pm-lead.md
 │   ├── gang-market-researcher.md
 │   ├── gang-ux-researcher.md
 │   ├── gang-finance-risk-analyst.md
 │   ├── gang-solutions-architect.md
-│   └── gang-business-strategist.md
+│   ├── gang-business-strategist.md
+│   └── gang-domain-expert.md        # 🔬 Optional
 │
 ├── 📂 ux-deliverables/              # 9 UX output files
 │   ├── personas.md
@@ -583,7 +590,15 @@ All output is written to `.gang/` in your project directory:
 │
 ├── 📄 debate-log.md                 # Agreements · conflicts · kill switches
 ├── 📄 scored-plans.md               # 📊 Quantified plan comparison
-└── 📄 executive-brief.md            # 👔 Go/No-Go + implementation roadmap
+├── 📄 executive-brief.md            # 👔 Go/No-Go + implementation roadmap
+│
+└── 📂 go-package/                   # 📦 Build-ready deliverables (GO verdict only)
+    ├── brd.md                       # Business Requirements Document
+    ├── technical-architecture.md    # Technical Architecture Specification
+    ├── project-charter.md           # Project Charter
+    ├── risk-register.md             # Formal Risk Register
+    ├── data-model.md                # Domain Model / ER Specification
+    └── api-contracts.md             # API Contract Drafts
 ```
 
 ---
@@ -643,6 +658,7 @@ Multi-agent debate is [proven to reduce hallucinations](https://link.springer.co
 | 💰 **Finance/Risk Analyst** | DCF valuation, SaaS metrics (HEALTHY/WATCH/CRITICAL), scenario modeling (base/bull/bear/stress), risk matrix |
 | 🏗️ **Solutions Architect** | Tech debt scoring (Severity x BlastRadius / Cost), DORA metrics, build-vs-buy TCO, ADRs |
 | 📈 **Business Strategist** | Business Model Canvas, GTM (3 phases), competitive moat (Porter), pricing tier modeling |
+| 🔬 **Domain Expert** *(optional)* | Industry reality checks, regulatory/compliance landscape, domain benchmarks, table-stakes vs differentiators |
 | 👔 **CEO/CTO Advisor** | Strategic options matrix, Tree of Thought, 4-tier capital allocation, pre-mortem, stress-test, kill switches |
 
 ---
@@ -658,6 +674,8 @@ Multi-agent debate is [proven to reduce hallucinations](https://link.springer.co
 | Competitive research | Manual | Manual | Manual | ✅ **Automated** |
 | UX deliverables | ❌ | ❌ | Separate engagement | ✅ **Built-in + Stitch** |
 | Kill switches | ❌ | ❌ | Sometimes | ✅ **Explicit checkpoints** |
+| Domain expertise | ❌ | ❌ | Sometimes | ✅ **Optional Domain Expert** |
+| Build-ready docs | ❌ | ❌ | Sometimes | ✅ **GO Package (BRD, arch, charter)** |
 | Lives in your IDE | ❌ | ❌ | ❌ | ✅ **One command** |
 | Cost | Free–$$$ | $8-20/seat/mo | $50K+ | ✅ **Your Claude API usage** |
 

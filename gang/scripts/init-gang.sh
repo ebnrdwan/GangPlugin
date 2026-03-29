@@ -9,6 +9,7 @@ mkdir -p "$GANG_DIR/position-papers"
 mkdir -p "$GANG_DIR/debate/round-1"
 mkdir -p "$GANG_DIR/debate/round-2"
 mkdir -p "$GANG_DIR/ux-deliverables"
+mkdir -p "$GANG_DIR/go-package"
 mkdir -p "$GANG_DIR/learnings"
 
 # Generate session ID
@@ -28,7 +29,8 @@ cat > "$GANG_DIR/state.json" << EOF
   "started_at": "$STARTED_AT",
   "stages_completed": [],
   "current_stage": "init",
-  "brief": ".gang/context-brief.md"
+  "brief": ".gang/context-brief.md",
+  "domain_expert_enabled": false
 }
 EOF
 
