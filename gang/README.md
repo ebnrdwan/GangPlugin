@@ -413,6 +413,71 @@ The CEO/CTO Advisor (running on **Opus** for deepest reasoning) reads everything
 
 ---
 
+### 📦 Stage 6 — DELIVER: GO Package
+
+When the verdict is **GO** or **CONDITIONAL-GO**, run `/gang deliver` to generate a complete set of build-ready documents from all committee artifacts:
+
+```
+.gang/go-package/
+├── brd.md                       # Business Requirements Document
+│                                  Objectives, stakeholder analysis, MoSCoW requirements,
+│                                  functional + non-functional requirements, user stories,
+│                                  business rules, data requirements, constraints
+│
+├── technical-architecture.md   # Technical Architecture Specification
+│                                  System overview, ADRs, C4 diagrams, tech stack,
+│                                  data + integration + security architecture,
+│                                  scalability design, monitoring
+│
+├── project-charter.md           # Project Charter
+│                                  Purpose, objectives, scope, phased milestones,
+│                                  budget summary, stakeholders, kill switches,
+│                                  success criteria
+│
+├── risk-register.md             # Formal Risk Register
+│                                  Risk ID, category, likelihood × impact scoring,
+│                                  owner, mitigation, contingency, kill switch mapping
+│
+├── data-model.md                # Domain Model / ER Specification
+│                                  Entity definitions, relationships, data lifecycle,
+│                                  PII annotations, compliance constraints
+│
+└── api-contracts.md             # API Contract Drafts
+                                   Endpoints, request/response schemas, auth requirements,
+                                   rate limits, error formats, versioning strategy
+```
+
+> 💡 **If verdict is NO-GO:** `/gang deliver` will explain why it can't generate the GO Package and what needs to change to reach a GO verdict.
+
+---
+
+### 🔄 `/gang reinit` — Refresh Without Losing Progress
+
+Projects evolve. Code changes. Market moves. Run `/gang reinit` to re-run the INIT stage on an existing session without starting over:
+
+| What changes | What's preserved |
+|-------------|-----------------|
+| Deep codebase re-scan (picks up new code) | Session ID — same evaluation thread |
+| Fresh competitive research | `.gang/learnings/` (accumulated insights) |
+| Re-asked scoping questions (existing answers shown as defaults) | Option to accept or update each answer |
+| Reset: THINK/DEBATE/SCORE/ADVISE stages must re-run | Domain expert opt-in can be changed |
+
+```bash
+/gang reinit    # Re-run INIT, refresh context brief, reset downstream stages
+```
+
+State after `reinit`:
+```json
+{
+  "session_id": "gang-20260329-143022",  // unchanged
+  "stages_completed": ["init"],           // downstream reset
+  "reinit_count": 1,                      // tracks refreshes
+  "last_reinit": "2026-03-29T16:00:00Z"
+}
+```
+
+---
+
 ## 🎯 Use Cases
 
 ### 1. 💡 "Should we build this?" — Full Product Evaluation
@@ -507,11 +572,8 @@ How should we respond — differentiate, go upmarket, niche down, or pivot?
 ## 📦 Installation
 
 ```bash
-# 1️⃣ Add the marketplace
-claude plugin marketplace add https://github.com/ebnrdwan/GangPlugin
-
-# 2️⃣ Install the plugin
-claude plugin install gang
+# 1️⃣ Install the plugin
+claude plugin install https://github.com/ebnrdwan/GangPlugin
 ```
 
 > 🖥️ Works in **Claude Code CLI**, **Claude Code Desktop** (Mac/Windows), and **IDE extensions** (VS Code, JetBrains).

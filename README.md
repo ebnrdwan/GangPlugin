@@ -23,13 +23,10 @@
 ## ⚡ Quick Start
 
 ```bash
-# 1️⃣ Add the marketplace
-claude plugin marketplace add https://github.com/ebnrdwan/GangPlugin
+# 1️⃣ Install the plugin
+claude plugin install https://github.com/ebnrdwan/GangPlugin
 
-# 2️⃣ Install the plugin
-claude plugin install gang
-
-# 3️⃣ Run on any project
+# 2️⃣ Run on any project
 /gang run
 ```
 
