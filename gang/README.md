@@ -56,6 +56,49 @@ graph LR
     style E fill:#d946ef,stroke:#c026d3,color:#fff
 ```
 
+Run `/gang status` at any point to see exactly where you are:
+
+```
+🏛️ Gang Committee Status
+━━━━━━━━━━━━━━━━━━━━━━━━
+Session: gang-20260329-143022
+Started: 2026-03-29
+
+[✓] Stage 1: INIT — Context brief ready
+[✓] Stage 2: THINK — 6/6 position papers complete
+[✓] Stage 3: DEBATE — 2 rounds complete, debate log compiled
+[→] Stage 4: SCORE — Scoring in progress...
+[ ] Stage 5: ADVISE — Not started
+
+Artifacts:
+  .gang/context-brief.md .............. ✓
+  .gang/competitive-scan.md ........... ✓
+  .gang/position-papers/ .............. 6 files ✓
+    ├── gang-pm-lead.md
+    ├── gang-market-researcher.md
+    ├── gang-ux-researcher.md
+    ├── gang-finance-risk-analyst.md
+    ├── gang-solutions-architect.md
+    └── gang-business-strategist.md
+  .gang/ux-deliverables/ .............. 9 files ✓
+    ├── personas.md
+    ├── jobs-to-be-done.md
+    ├── user-journeys.md
+    ├── information-architecture.md
+    ├── wireframes.md
+    ├── design-tokens.md
+    ├── interaction-patterns.md
+    ├── accessibility-notes.md
+    └── stitch-instructions.md
+  .gang/debate/round-1/ ............... 6 files ✓
+  .gang/debate/round-2/ ............... 6 files ✓
+  .gang/debate-log.md ................. ✓
+  .gang/scored-plans.md ............... in progress
+  .gang/executive-brief.md ............ pending
+
+Next: Waiting for Stage 4 to complete, then run /gang advise
+```
+
 ---
 
 ### 🔍 Stage 1 — INIT: Understand Everything First
@@ -85,6 +128,48 @@ Design reference: web application/stitch/projects/6261359687710202709/screens/..
 Gang will scan your codebase, find that it's a stock analysis app, research TradingView/TrendSpider/Trade Ideas as competitors, and then ask smart questions like:
 
 > *"Your codebase shows a SaaS subscription model — should the committee evaluate premium tier features for this page?"*
+
+</details>
+
+<details>
+<summary>📋 <strong>Example: What INIT output looks like</strong></summary>
+
+```
+📋 Project Understanding
+━━━━━━━━━━━━━━━━━━━━━━━
+Product: StockInsight
+Type: Web Application (Next.js + Spring Boot)
+Stack: TypeScript, Kotlin, PostgreSQL, Redis, TradingView Widgets
+Domain: Stock analysis platform for retail traders
+
+Features Found:
+  • Real-time price streaming via WebSocket
+  • Watchlist management with alerts
+  • Portfolio tracking with P&L calculation
+  • News aggregation from multiple feeds
+  • Basic charting with TradingView integration
+
+Evaluation Subject: Stock Details Page
+  Build a comprehensive stock details page including prices,
+  technical analysis, fundamental analysis, news, signals
+  (intraday/swing), calendar, predictions, and buy zones.
+  Position markers for held stocks.
+
+🌐 Competitive Scan
+━━━━━━━━━━━━━━━━━━
+Found 6 competitors:
+  1. TradingView ........... Freemium · $14.95-59.95/mo · Most features
+  2. TrendSpider ........... SaaS · $22-67/mo · AI-powered analysis
+  3. Trade Ideas ........... SaaS · $118-228/mo · Scanning + signals
+  4. Finviz ................ Freemium · $39.50/mo · Screening focus
+  5. Stock Analysis ........ Freemium · $9.99/mo · Fundamental focus
+  6. Seeking Alpha ......... Freemium · $19.99/mo · Community + news
+
+Table-stakes: Real-time quotes, charting, watchlists, news
+Gaps: Unified TA+FA on one page, position-aware signals, buy zone overlays
+
+Does this look right? Anything I'm missing?
+```
 
 </details>
 
@@ -206,6 +291,47 @@ The CEO/CTO Advisor (running on **Opus** for deepest reasoning) reads everything
 | 📉 | Downside scenarios with stress-test results |
 | 📅 | **90-day implementation roadmap** |
 | ⚡ | **Quick wins** to execute immediately |
+
+<details>
+<summary>👔 <strong>Example: Executive brief summary</strong></summary>
+
+```
+👔 Executive Brief — CEO/CTO Advisory
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Verdict:  ✅ CONDITIONAL GO
+
+  "Build the stock details page, but phase the rollout.
+   Ship core (price + TA + FA) in 6 weeks, then layer signals
+   and predictions behind a premium gate to validate willingness
+   to pay before investing in ML infrastructure."
+
+📊 Plan A Score: 7.6 / 10  (80% confidence)
+
+🚨 Kill Switches:
+  1. If <2% of free users click "Upgrade" prompt by Week 8 → cut ML scope
+  2. If data provider costs exceed $3K/mo at 1K DAU → renegotiate or switch
+  3. If TA page load >3s on P95 → simplify before adding more widgets
+
+⚡ Quick Wins (Week 1-2):
+  • Integrate TradingView advanced chart on detail page
+  • Add position badge overlay (portfolio API exists)
+  • Wire up existing news feed to stock-specific filter
+
+📅 90-Day Roadmap:
+  Week 1-2:   Core page layout + price + basic chart
+  Week 3-4:   Technical analysis widgets + fundamental data cards
+  Week 5-6:   News integration + calendar + earnings
+  Week 7-8:   Signals MVP (rules-based, not ML) + premium gate
+  Week 9-12:  Prediction engine v1 + buy zone overlays (if gate validates)
+
+📉 Downside Scenarios:
+  Base:   $4.2K MRR by Month 6 (12% conversion on premium)
+  Bear:   $1.8K MRR (5% conversion — signals not compelling enough)
+  Stress: $0.4K MRR (2% conversion — pivot to pure free + ads)
+```
+
+</details>
 
 ---
 

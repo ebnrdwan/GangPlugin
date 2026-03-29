@@ -69,13 +69,33 @@ graph LR
     style E fill:#d946ef,stroke:#c026d3,color:#fff
 ```
 
-| Command | Stage | What Happens |
-|---------|-------|-------------|
-| `/gang init` | 🔍 INIT | Deep project scan → competitive research → targeted questions |
-| `/gang think` | 🧠 THINK | 6 experts analyze independently in parallel |
-| `/gang debate` | ⚔️ DEBATE | 2 rounds of structured cross-review + stress-testing |
-| `/gang score` | 📊 SCORE | Plans scored on 5 dimensions (1-10 + confidence %) |
-| `/gang advise` | 👔 ADVISE | CEO/CTO delivers Go/No-Go with kill switches + roadmap |
+Run `/gang status` at any point to track progress:
+
+```
+🏛️ Gang Committee Status
+━━━━━━━━━━━━━━━━━━━━━━━━
+Session: gang-20260329-143022
+Started: 2026-03-29
+
+[✓] Stage 1: INIT — Context brief ready
+[✓] Stage 2: THINK — 6/6 position papers complete
+[→] Stage 3: DEBATE — Round 1 complete, Round 2 in progress
+[ ] Stage 4: SCORE — Not started
+[ ] Stage 5: ADVISE — Not started
+
+Artifacts:
+  .gang/context-brief.md .............. ✓
+  .gang/competitive-scan.md ........... ✓
+  .gang/position-papers/ .............. 6 files ✓
+  .gang/ux-deliverables/ .............. 9 files ✓
+  .gang/debate/round-1/ ............... 6 files ✓
+  .gang/debate/round-2/ ............... 0 files
+  .gang/debate-log.md ................. pending
+  .gang/scored-plans.md ............... pending
+  .gang/executive-brief.md ............ pending
+
+Next: Run /gang debate to continue
+```
 
 ---
 
