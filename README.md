@@ -55,21 +55,92 @@ Gang embeds a complete business evaluation pipeline in your development environm
 
 ## 🔄 How It Works
 
-```mermaid
-graph LR
-    A["🔍 INIT<br/>Scan + Research"] --> B["🧠 THINK<br/>6 Experts"]
-    B --> C["⚔️ DEBATE<br/>2 Rounds"]
-    C --> D["📊 SCORE<br/>5 Dimensions"]
-    D --> E["👔 ADVISE<br/>Go / No-Go"]
+<table>
+<tr>
+<td align="center" width="20%">
 
-    style A fill:#6366f1,stroke:#4f46e5,color:#fff
-    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style C fill:#a855f7,stroke:#9333ea,color:#fff
-    style D fill:#c084fc,stroke:#a855f7,color:#fff
-    style E fill:#d946ef,stroke:#c026d3,color:#fff
-```
+### 🔍
+### INIT
+**Scan + Research**
 
-Run `/gang status` at any point to track progress:
+`/gang init`
+
+Deep codebase scan,<br/>competitive research,<br/>targeted questions
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### 🧠
+### THINK
+**6 Experts**
+
+`/gang think`
+
+Independent parallel<br/>analysis — no agent<br/>sees another's work
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### ⚔️
+### DEBATE
+**2 Rounds**
+
+`/gang debate`
+
+Cross-review critiques,<br/>pre-mortems, stress-test<br/>at -30/-50/-80%
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### 📊
+### SCORE
+**5 Dimensions**
+
+`/gang score`
+
+Market · UX · Tech<br/>Finance · Strategy<br/>1-10 + confidence %
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### 👔
+### ADVISE
+**Go / No-Go**
+
+`/gang advise`
+
+CEO/CTO verdict,<br/>kill switches,<br/>90-day roadmap
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+<details>
+<summary>📋 <strong>Live progress tracking — <code>/gang status</code></strong></summary>
+
+<br/>
 
 ```
 🏛️ Gang Committee Status
@@ -96,6 +167,8 @@ Artifacts:
 
 Next: Run /gang debate to continue
 ```
+
+</details>
 
 ---
 

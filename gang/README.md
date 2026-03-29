@@ -42,21 +42,115 @@ Today's AI-assisted development is great at **building** — but terrible at dec
 
 ## 🔄 How It Works
 
-```mermaid
-graph LR
-    A["🔍 INIT<br/>Deep Scan<br/>+ Market Research"] --> B["🧠 THINK<br/>6 Experts<br/>in Parallel"]
-    B --> C["⚔️ DEBATE<br/>2 Rounds<br/>Cross-Review"]
-    C --> D["📊 SCORE<br/>5 Dimensions<br/>1-10 Scale"]
-    D --> E["👔 ADVISE<br/>Go / No-Go<br/>+ Roadmap"]
+<table>
+<tr>
+<td align="center" width="20%">
 
-    style A fill:#6366f1,stroke:#4f46e5,color:#fff
-    style B fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style C fill:#a855f7,stroke:#9333ea,color:#fff
-    style D fill:#c084fc,stroke:#a855f7,color:#fff
-    style E fill:#d946ef,stroke:#c026d3,color:#fff
-```
+### 🔍
+### INIT
+**Deep Scan + Research**
 
-Run `/gang status` at any point to see exactly where you are:
+`/gang init`
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### 🧠
+### THINK
+**6 Experts in Parallel**
+
+`/gang think`
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### ⚔️
+### DEBATE
+**2 Rounds Cross-Review**
+
+`/gang debate`
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### 📊
+### SCORE
+**5 Dimensions · 1-10**
+
+`/gang score`
+
+</td>
+<td align="center" width="5%">
+
+**➜**
+
+</td>
+<td align="center" width="20%">
+
+### 👔
+### ADVISE
+**Go / No-Go + Roadmap**
+
+`/gang advise`
+
+</td>
+</tr>
+<tr>
+<td align="center">
+
+Scans codebase,<br/>researches competitors,<br/>asks targeted questions
+
+</td>
+<td></td>
+<td align="center">
+
+Each expert writes<br/>independently — no agent<br/>sees another's work
+
+</td>
+<td></td>
+<td align="center">
+
+Critiques + pre-mortems,<br/>stress-test scenarios<br/>at -30% / -50% / -80%
+
+</td>
+<td></td>
+<td align="center">
+
+Market · UX · Tech<br/>Finance · Strategy<br/>with confidence %
+
+</td>
+<td></td>
+<td align="center">
+
+CEO/CTO on Opus,<br/>kill switches,<br/>90-day roadmap
+
+</td>
+</tr>
+</table>
+
+<br/>
+
+Run **`/gang status`** at any point to see exactly where you are:
+
+<details>
+<summary>📋 <strong>Example: Live progress tracking</strong></summary>
+
+<br/>
 
 ```
 🏛️ Gang Committee Status
@@ -98,6 +192,8 @@ Artifacts:
 
 Next: Waiting for Stage 4 to complete, then run /gang advise
 ```
+
+</details>
 
 ---
 
