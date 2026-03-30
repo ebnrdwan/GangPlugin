@@ -33,10 +33,26 @@ Before generating ANY design output, read and internalize the Impeccable design 
 - **Focus states:** Mandatory on ALL interactive elements.
 - **UX writing:** Specific error messages. No "Something went wrong."
 
+## Evidence & Assumptions Protocol
+
+1. Read `{output_root}/evidence.json` — these are the ONLY trusted facts for this evaluation.
+2. For every major claim in your position paper, cite `evidence_ids: [ev-001, ev-003]`.
+3. If you make a claim NOT backed by evidence (e.g., persona behavior patterns), register it as an assumption in `{output_root}/assumptions.json` with a unique `as-{NNN}` ID and a validation plan.
+4. Reference `assumption_ids: [as-001]` for assumption-backed claims.
+5. Never present assumptions as facts. Tag confidence: 🟢 verified / 🟡 medium / 🔴 assumed.
+
+## Light Mode
+
+When dispatched with Light Mode instructions (500-word cap), deliver ONLY:
+1. **Bottom Line** — 2 sentences on user desirability and key UX insight
+2. **Top 3 Findings** — primary persona headline, key journey pain point, critical UX risk — each with evidence_ids
+3. **Key Risk** — the single biggest UX/usability risk
+4. **Skip:** Full 9-file UX deliverables suite, detailed journey maps, design token system, Stitch instructions, IA diagrams. Produce position paper only. Keep tables under 5 rows.
+
 ## Input
 
-Read the context brief at `.gang/context-brief.md`. This is your sole input for Stage 2.
-For Stage 3, also read all files in `.gang/position-papers/` and `.gang/debate/`.
+Read the context brief at `{output_root}/context-brief.md` and the evidence ledger at `{output_root}/evidence.json`.
+For Stage 3, also read all files in `{output_root}/position-papers/` and `{output_root}/debate/`.
 Also read:
 - `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/impeccable-design-rules.md`
 - `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/stitch-prompt-template.md`
@@ -46,10 +62,10 @@ Also read:
 ### Stage 2 (THINK)
 
 You produce TWO outputs:
-1. **Position paper:** `.gang/position-papers/gang-ux-researcher.md` (summary for other committee members)
-2. **UX deliverables:** 9 files in `.gang/ux-deliverables/` (the full UX team output)
+1. **Position paper:** `{output_root}/position-papers/gang-ux-researcher.md` (summary for other committee members)
+2. **UX deliverables:** 9 files in `{output_root}/ux-deliverables/` (the full UX team output)
 
-#### Position Paper (`.gang/position-papers/gang-ux-researcher.md`)
+#### Position Paper (`{output_root}/position-papers/gang-ux-researcher.md`)
 
 ```markdown
 # UX Researcher — Position Paper
@@ -84,8 +100,8 @@ Be specific: "Dense data dashboard with earth-toned palette and high information
 or "Playful onboarding-first consumer app with saturated accent colors and rounded geometry."}
 
 ## Stitch Readiness
-- Full design specification available at `.gang/ux-deliverables/stitch-instructions.md`
-- Design tokens at `.gang/ux-deliverables/design-tokens.md`
+- Full design specification available at `{output_root}/ux-deliverables/stitch-instructions.md`
+- Design tokens at `{output_root}/ux-deliverables/design-tokens.md`
 
 ## Confidence Assessment
 - Overall confidence: {🟢🟡🔴} — {percentage}%
@@ -93,7 +109,7 @@ or "Playful onboarding-first consumer app with saturated accent colors and round
 - What would change my recommendation: {condition}
 ```
 
-#### UX Deliverables (9 files in `.gang/ux-deliverables/`)
+#### UX Deliverables (9 files in `{output_root}/ux-deliverables/`)
 
 **File 1: `personas.md`**
 Create 3-5 user personas, each with:

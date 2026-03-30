@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gang Evidence Ledger",
+  "description": "Structured evidence store populated by INIT and referenced by all agents",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "source", "date", "type", "text", "confidence"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^ev-\\d{3,}$",
+        "description": "Unique evidence identifier (ev-001, ev-002, ...)"
+      },
+      "source": {
+        "type": "string",
+        "enum": ["codebase-scan", "perplexity-sonar-pro", "gemini-2.5-pro", "claude-websearch", "user-input", "web-fetch"],
+        "description": "Origin of this evidence"
+      },
+      "file": {
+        "type": "string",
+        "description": "Source file path (for codebase-scan evidence)"
+      },
+      "url": {
+        "type": "string",
+        "format": "uri",
+        "description": "Source URL (for web research evidence)"
+      },
+      "date": {
+        "type": "string",
+        "format": "date",
+        "description": "Date evidence was collected (YYYY-MM-DD)"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "tech-stack", "feature-inventory", "architecture", "domain-model",
+          "monetization", "auth-flow", "data-source", "dependency",
+          "competitor-pricing", "competitor-feature", "market-size",
+          "market-trend", "user-behavior", "regulatory", "benchmark",
+          "financial-data", "industry-report"
+        ],
+        "description": "Category of evidence"
+      },
+      "text": {
+        "type": "string",
+        "minLength": 10,
+        "description": "The evidence statement"
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Confidence score (0.0-1.0). 0.5+ is trusted fact."
+      }
+    },
+    "additionalProperties": false
+  }
+}

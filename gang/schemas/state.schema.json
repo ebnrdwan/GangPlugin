@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gang State",
+  "description": "Session state tracking for the Gang committee evaluation",
+  "type": "object",
+  "required": ["version", "session_id", "started_at", "stages_completed", "current_stage"],
+  "properties": {
+    "version": { "type": "string" },
+    "session_id": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "stages_completed": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["init", "think", "debate", "score", "advise", "deliver"] }
+    },
+    "current_stage": {
+      "type": "string",
+      "enum": ["init", "think", "debate", "score", "advise", "deliver", "complete"]
+    },
+    "evaluation_type": { "type": "string", "enum": ["flat", "feature", "project"] },
+    "evaluation_name": { "type": "string" },
+    "output_root": { "type": "string" },
+    "brief": { "type": "string" },
+    "domain_expert_enabled": { "type": "boolean" },
+    "active_agents": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "debate_mode": { "type": "string" },
+    "debate_matrix": { "type": "object" },
+    "agent_results": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["success", "failed", "incomplete", "skipped"] },
+          "model_used": { "type": "string" },
+          "provider": { "type": "string" },
+          "error_code": { "type": ["integer", "null"] },
+          "fallback_attempted": { "type": "boolean" }
+        }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "total_estimated_usd": { "type": "number" },
+        "budget_limit": { "type": "number" },
+        "stages": { "type": "object" }
+      }
+    },
+    "reinit_count": { "type": "integer" },
+    "last_reinit": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

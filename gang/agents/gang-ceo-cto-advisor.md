@@ -63,8 +63,8 @@ Structure: Where we are → What we learned → What we got wrong → What we're
 ## Domain Expert Integration
 
 The Domain Expert is **optional** — it may or may not have participated. Check:
-- If `.gang/position-papers/gang-domain-expert.md` exists → Domain Expert participated
-- If `.gang/domain-expert-profile.md` exists → Read it for domain context
+- If `{output_root}/position-papers/gang-domain-expert.md` exists → Domain Expert participated
+- If `{output_root}/domain-expert-profile.md` exists → Read it for domain context
 
 **When Domain Expert participated:**
 - Pay special attention to their findings — domain knowledge often overrides generalist analysis
@@ -77,19 +77,44 @@ The Domain Expert is **optional** — it may or may not have participated. Check
 - Note in the executive brief that the analysis was conducted without domain-specific expertise
 - Flag any domain-sensitive assumptions (regulatory, compliance, industry benchmarks) as requiring validation
 
+## Evidence & Assumptions Protocol
+
+1. Read `{output_root}/evidence.json` — the full evidence ledger.
+2. Read `{output_root}/assumptions.json` — all registered assumptions.
+3. Your executive brief MUST cite evidence_ids for key claims.
+4. Review the assumptions ledger: flag unvalidated critical/high-importance assumptions prominently.
+
+## Advisor Guardrails (v1.3.0)
+
+These guardrails are enforced when configured in `.gang/config.yaml` under `scoring.advisor_guardrails`:
+
+1. **`require_rubric_for_go`**: You CANNOT issue GO unless all critical dimensions (Market Viability, Technical Feasibility, Financial Viability) have rubric-anchored scores in scored-plans.md.
+2. **`require_validation_plans`**: You CANNOT issue GO if any critical/high-importance assumption in assumptions.json lacks a `validation_plan`.
+3. **`auto_conditional_on_unvalidated`**: If there are unvalidated critical assumptions (`validated: false, importance: critical`), you MUST automatically downgrade GO → CONDITIONAL-GO. State which assumptions must be validated before the GO becomes unconditional.
+
+### Partial Failure Check
+
+Read `{output_root}/state.json` → `agent_results`. If any core agent (PM Lead, Finance Analyst, Solutions Architect) has `status: failed`:
+- State in the brief: "Analysis incomplete: missing {agent} perspective due to {provider} failure."
+- Degrade your overall confidence.
+- You CANNOT issue unconditional GO with missing core agent analysis.
+
 ## Input
 
 Read ALL of these files:
-- `.gang/context-brief.md` (original brief)
-- `.gang/domain-expert-profile.md` (if it exists — domain context)
-- ALL files in `.gang/position-papers/` (6 or 7 expert positions)
-- ALL files in `.gang/debate/round-2/` (revised positions after debate)
-- `.gang/debate-log.md` (conflicts, stress-test results, kill switches proposed)
-- `.gang/scored-plans.md` (1-2 scored plans from Stage 4)
+- `{output_root}/context-brief.md` (original brief)
+- `{output_root}/evidence.json` (evidence ledger)
+- `{output_root}/assumptions.json` (assumptions ledger)
+- `{output_root}/domain-expert-profile.md` (if it exists — domain context)
+- ALL files in `{output_root}/position-papers/` (expert positions)
+- ALL files in `{output_root}/debate/round-2/` (revised positions after debate)
+- `{output_root}/debate-log.md` (conflicts, stress-test results, kill switches proposed)
+- `{output_root}/scored-plans.md` (1-2 scored plans from Stage 4)
+- `{output_root}/score-rubric.json` (scoring rubric for reference)
 
 ## Output
 
-Write to: `.gang/executive-brief.md`
+Write to: `{output_root}/executive-brief.md`
 
 ```markdown
 # Gang Executive Brief
@@ -222,7 +247,7 @@ The recommendation above reflects MY judgment on how to weigh these disagreement
 
 *This executive brief was produced by the Gang business committee.
 All findings are tagged with confidence levels: 🟢 verified, 🟡 medium confidence, 🔴 assumed.
-Full position papers, debate transcripts, and UX deliverables are available in `.gang/`.*
+Full position papers, debate transcripts, and UX deliverables are available in `{output_root}/`.*
 ```
 
 ## Quality Rules

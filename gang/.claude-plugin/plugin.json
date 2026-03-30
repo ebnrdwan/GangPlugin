@@ -1,7 +1,7 @@
 {
   "name": "gang",
-  "version": "1.2.0",
-  "description": "Multi-agent business committee that orchestrates domain experts through structured debate to produce scored strategic plans, executive-ready recommendations, and build-ready deliverables",
+  "version": "1.3.0",
+  "description": "Configurable, auditable, cost-aware multi-agent business committee. Orchestrates domain experts through evidence-backed structured debate with rubric-anchored scoring, budget tracking, multi-provider routing, and advisor guardrails to produce scored strategic plans and executive Go/No-Go recommendations.",
   "author": {
     "name": "ebnrdwan"
   },
@@ -20,6 +20,13 @@
     "google-stitch",
     "domain-expert",
     "brd",
-    "deliverables"
+    "deliverables",
+    "evidence-ledger",
+    "scoring-rubric",
+    "cost-management",
+    "multi-provider",
+    "validation",
+    "configurable",
+    "budget-adaptive"
   ]
 }

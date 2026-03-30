@@ -1,0 +1,146 @@
+name: Gang Plugin Validation
+
+on:
+  pull_request:
+    paths:
+      - 'gang/**'
+  push:
+    branches: [main]
+    paths:
+      - 'gang/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Create fixture .gang session
+        run: |
+          mkdir -p .gang/position-papers .gang/debate/round-1 .gang/debate/round-2 .gang/ux-deliverables .gang/go-package
+
+          # Initialize evidence.json
+          cat > .gang/evidence.json << 'FIXTURE'
+          [
+            {
+              "id": "ev-001",
+              "source": "codebase-scan",
+              "file": "package.json",
+              "date": "2026-01-01",
+              "type": "tech-stack",
+              "text": "Test fixture evidence entry for CI validation",
+              "confidence": 0.95
+            }
+          ]
+          FIXTURE
+
+          # Initialize assumptions.json
+          cat > .gang/assumptions.json << 'FIXTURE'
+          [
+            {
+              "id": "as-001",
+              "text": "Test fixture assumption for CI validation",
+              "category": "technical",
+              "importance": "medium",
+              "registered_by": "ci-fixture",
+              "stage": "init",
+              "validation_plan": "Automated CI check",
+              "validated": false,
+              "validation_result": null
+            }
+          ]
+          FIXTURE
+
+          # Initialize state.json
+          cat > .gang/state.json << 'FIXTURE'
+          {
+            "version": "1.3.0",
+            "session_id": "ci-fixture-001",
+            "started_at": "2026-01-01T00:00:00Z",
+            "stages_completed": ["init"],
+            "current_stage": "think",
+            "evaluation_type": "flat",
+            "evaluation_name": "",
+            "output_root": ".gang",
+            "brief": ".gang/context-brief.md",
+            "domain_expert_enabled": false,
+            "active_agents": [],
+            "debate_mode": "all-vs-all",
+            "debate_matrix": {},
+            "agent_results": {},
+            "cost": { "total_estimated_usd": 0, "budget_limit": 0, "stages": {} },
+            "reinit_count": 0,
+            "last_reinit": null
+          }
+          FIXTURE
+
+          # Create context brief
+          echo "# Gang Context Brief\n\n**Subject:** CI Test\n\n## Product Overview\nTest fixture." > .gang/context-brief.md
+
+          # Create score rubric from default
+          if [ -f "gang/skills/gang/references/default-score-rubric.json" ]; then
+            cp gang/skills/gang/references/default-score-rubric.json .gang/score-rubric.json
+          fi
+
+      - name: Validate JSON schemas exist
+        run: |
+          for schema in evidence assumptions scorecard state config score-rubric; do
+            if [ -f "gang/schemas/${schema}.schema.json" ]; then
+              echo "PASS: ${schema}.schema.json exists"
+              jq empty "gang/schemas/${schema}.schema.json"
+            else
+              echo "FAIL: ${schema}.schema.json missing"
+              exit 1
+            fi
+          done
+
+      - name: Validate fixture data
+        run: |
+          for f in evidence.json assumptions.json state.json; do
+            if jq empty ".gang/$f" 2>/dev/null; then
+              echo "PASS: .gang/$f is valid JSON"
+            else
+              echo "FAIL: .gang/$f is invalid JSON"
+              exit 1
+            fi
+          done
+
+      - name: Run validate-gang.sh
+        run: |
+          chmod +x gang/scripts/validate-gang.sh
+          bash gang/scripts/validate-gang.sh .gang
+
+      - name: Validate default config template
+        run: |
+          if [ -f "gang/skills/gang/references/default-config.yaml" ]; then
+            echo "PASS: default-config.yaml exists"
+          else
+            echo "FAIL: default-config.yaml missing"
+            exit 1
+          fi
+
+      - name: Validate default score rubric
+        run: |
+          if [ -f "gang/skills/gang/references/default-score-rubric.json" ]; then
+            jq empty "gang/skills/gang/references/default-score-rubric.json"
+            echo "PASS: default-score-rubric.json is valid JSON"
+          else
+            echo "FAIL: default-score-rubric.json missing"
+            exit 1
+          fi
+
+      - name: Validate scripts are executable
+        run: |
+          for script in init-gang.sh validate-gang.sh external-dispatch.sh aggregate-learnings.sh; do
+            if [ -f "gang/scripts/$script" ]; then
+              echo "PASS: $script exists"
+              # Check bash syntax
+              bash -n "gang/scripts/$script" && echo "PASS: $script syntax OK"
+            else
+              echo "FAIL: $script missing"
+              exit 1
+            fi
+          done

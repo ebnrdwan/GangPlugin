@@ -1,40 +1,52 @@
 ---
-description: "Run the Gang business committee — a panel of 6-7 domain experts that evaluates product ideas through structured debate, produces scored strategic plans, and delivers an executive Go/No-Go recommendation with Google Stitch-ready UI specs and build-ready deliverables. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status."
-argument-hint: "[init|think|debate|score|advise|deliver|reinit|run|status]"
+description: "Run the Gang business committee — a panel of configurable domain experts that evaluates product ideas through structured debate, produces evidence-backed scored strategic plans, and delivers an executive Go/No-Go recommendation with advisor guardrails. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status, config, evaluations, validate."
+argument-hint: "[init|think|debate|score|advise|deliver|reinit|run|status|config|evaluations|validate]"
 ---
 
-# Gang Business Committee
+# Gang Business Committee v1.3.0
 
-You have been invoked as the Gang business committee orchestrator. Load and execute the `gang` skill which contains the full 5-stage workflow.
+You have been invoked as the Gang business committee orchestrator. Load and execute the `gang` skill which contains the full 6-stage workflow.
 
 ## Subcommand Routing
 
 Parse the arguments provided by the user:
 
-- **No arguments or `run`:** Execute the full 5-stage pipeline (INIT → THINK → DEBATE → SCORE → ADVISE)
-- **`init`:** Run Stage 1 only — deep project scan, competitive research, domain expert opt-in, targeted questions, produce context brief
-- **`think`:** Run Stage 2 only — dispatch 6-7 experts in parallel for independent analysis
-- **`debate`:** Run Stage 3 only — 2 rounds of structured cross-review debate
-- **`score`:** Run Stage 4 only — synthesize and score 1-2 competing plans
-- **`advise`:** Run Stage 5 only — CEO/CTO advisory with Go/No-Go recommendation
-- **`deliver`:** Generate GO Package — BRD, technical architecture, project charter, risk register, data model, API contracts (requires GO/CONDITIONAL-GO verdict)
-- **`reinit`:** Re-run INIT on existing session — refreshes context brief, resets downstream stages, preserves session ID
-- **`status`:** Show current progress and list generated artifacts
+- **No arguments or `run`:** Execute the full pipeline (INIT → THINK → DEBATE → SCORE → ADVISE → DELIVER if GO)
+- **`init`:** Stage 1 — quality mode selection, evaluation type, deep project scan, evidence population, competitive research, domain expert opt-in, targeted questions, context brief
+- **`think`:** Stage 2 — committee setup question (ALWAYS asked), then dispatch enabled experts with evidence/assumptions protocol
+- **`debate`:** Stage 3 — configurable debate mode (all-vs-all / selective / relevance-based / focused), 1-2 rounds
+- **`score`:** Stage 4 — rubric-anchored plan synthesis with evidence linking
+- **`advise`:** Stage 5 — CEO/CTO advisory with guardrails (auto-conditional-GO on unvalidated assumptions)
+- **`deliver`:** Stage 6 — generate GO Package (BRD, architecture, charter, risk register, data model, API contracts) — requires GO/CONDITIONAL-GO
+- **`reinit`:** Re-run INIT on existing session — refreshes context, re-populates evidence, resets downstream stages
+- **`status`:** Show committee roster, stage progress, cost tracking, validation status
+- **`config`:** Show or edit `.gang/config.yaml` settings
+- **`evaluations`:** List all feature and project evaluations with their status
+- **`validate`:** Run validation checks (schemas, evidence refs, assumption refs, file presence)
 
 ## Execution Rules
 
-1. **Check prerequisites:** Before running any stage, verify that prerequisite stages are complete by reading `.gang/state.json`. If prerequisites are missing, inform the user which stages need to run first.
+1. **Load config first:** Every stage begins by reading `.gang/config.yaml` and `{output_root}/state.json`.
 
-2. **Parallel dispatch:** In Stage 2 (THINK) and each debate round in Stage 3, dispatch ALL agents in a SINGLE message using parallel Agent tool calls. Do NOT dispatch them sequentially.
+2. **Check prerequisites:** Before running any stage, verify that prerequisite stages are complete. If prerequisites are missing, inform the user.
 
-3. **Visibility:** After each stage completes, present a concise summary to the user showing what was produced and key findings. The user should see progress in real-time, not just a final dump.
+3. **Committee setup at THINK:** ALWAYS ask the committee setup question at every `/gang think`. If a previous setup exists, offer "Keep current setup" as the first option.
 
-4. **Interactive after Stage 5:** After the executive brief is delivered, enter Q&A mode. The user can ask follow-up questions about any aspect of the committee's findings.
+4. **Parallel dispatch:** In THINK and each debate round, dispatch ALL enabled agents in a SINGLE message using parallel Agent tool calls.
 
-5. **UX deliverables reminder:** After Stage 2, remind the user that Google Stitch instructions are available at `.gang/ux-deliverables/stitch-instructions.md`.
+5. **Evidence protocol:** ALL agent dispatches include the Evidence & Assumptions Protocol — cite evidence_ids, register assumptions.
+
+6. **Cost awareness:** Track estimated costs per stage. Warn/block at configured budget thresholds.
+
+7. **Validation between stages:** When enabled, run validation checks before proceeding.
+
+8. **Visibility:** After each stage, present a concise summary showing what was produced, key findings, cost, and validation status.
+
+9. **Interactive after ADVISE:** Enter Q&A mode after the executive brief.
 
 ## Error Recovery
 
-- If an agent fails, report which one and offer to retry just that agent
-- If `.gang/` doesn't exist, run init first regardless of the subcommand
-- If the user provides additional context after init, offer to update the context brief and re-run affected stages
+- If an agent fails: follow failure_handling config (retry → fallback → mark failed)
+- If `.gang/` doesn't exist: run init first
+- If a core agent fails: CEO/CTO Advisor degrades confidence, cannot issue unconditional GO
+- If budget exceeded: warn and offer downgrade options

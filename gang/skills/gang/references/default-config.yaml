@@ -1,0 +1,212 @@
+# Gang Configuration — v1.3.0
+# Edit between stages. Changes take effect on the NEXT stage run.
+# Documentation: https://github.com/ebnrdwan/GangPlugin/blob/main/gang/README.md
+
+version: "1.3.0"
+
+# ─── Quality Mode Preset ────────────────────────────────────
+# Choosing a mode pre-populates settings below. You can override any setting after.
+# Options: "quick_scout" | "product_review" | "investment_grade" | "custom"
+mode: product_review
+
+# ─── Role Controls ──────────────────────────────────────────
+# enabled: true/false — toggle agent on/off
+# weight: "light" (500 words, fast) | "deep" (1500+ words, thorough)
+# model: "haiku" | "sonnet" | "opus"
+# timeout: seconds (0 = no limit)
+roles:
+  gang-pm-lead:
+    enabled: true
+    weight: deep
+    model: sonnet
+    timeout: 120
+  gang-market-researcher:
+    enabled: true
+    weight: deep
+    model: sonnet
+    timeout: 150
+  gang-ux-researcher:
+    enabled: true
+    weight: deep
+    model: sonnet
+    timeout: 180
+  gang-finance-risk-analyst:
+    enabled: true
+    weight: deep
+    model: sonnet
+    timeout: 120
+  gang-solutions-architect:
+    enabled: true
+    weight: deep
+    model: sonnet
+    timeout: 120
+  gang-business-strategist:
+    enabled: true
+    weight: deep
+    model: sonnet
+    timeout: 120
+  gang-domain-expert:
+    enabled: false
+    weight: deep
+    model: sonnet
+    timeout: 120
+  gang-ceo-cto-advisor:
+    enabled: true       # ALWAYS true — the synthesizer. Cannot be disabled.
+    weight: deep        # always deep
+    model: opus
+    timeout: 300
+  gang-deliverables-writer:
+    enabled: true       # ALWAYS true when DELIVER runs
+    weight: deep
+    model: sonnet
+    timeout: 300
+
+# ─── Debate ─────────────────────────────────────────────────
+# mode: "all-vs-all" | "selective" | "relevance-based" | "focused"
+# round2_mode is FIXED at all-vs-all (every critiqued agent must respond)
+debate:
+  enabled: true
+  mode: all-vs-all
+  max_rounds: 2         # 1 = no revision round, 2 = full debate
+  selective_pairs: {}   # only when mode=selective. Format: agent -> [targets]
+  focused_topics: []    # only when mode=focused. List of topic strings.
+  round2_mode: all-vs-all
+
+# ─── Output Organization ────────────────────────────────────
+# evaluation_type: "flat" (.gang/) | "feature" (.gang/features/{name}/) | "project" (.gang/projects/{name}/)
+output:
+  evaluation_type: flat
+  evaluation_name: ""
+
+# ─── Cost Management ────────────────────────────────────────
+cost:
+  enabled: true
+  budget_limit: 0       # 0 = no limit, in estimated USD
+  warn_at: 80           # percentage of budget to trigger warning
+  block_at: 100         # percentage to block-with-confirm
+  model_rates:          # estimated $/1M tokens (input/output)
+    haiku:   { input: 0.25,  output: 1.25  }
+    sonnet:  { input: 3.00,  output: 15.00 }
+    opus:    { input: 15.00, output: 75.00 }
+    perplexity-sonar-pro: { input: 3.00,  output: 15.00 }
+    gemini-2.5-pro:       { input: 1.25,  output: 10.00 }
+    gpt-4o:               { input: 2.50,  output: 10.00 }
+
+# ─── Adaptive Model Routing ─────────────────────────────────
+# mode: "manual" | "budget-adaptive" | "multi-provider"
+# manual: use models exactly as specified in roles
+# budget-adaptive: auto-downgrade when approaching budget (opus->sonnet->haiku)
+# multi-provider: route agents to external providers when configured
+routing:
+  mode: manual
+  downgrade_priority:   # last-to-downgrade order (CEO always last)
+    - gang-ceo-cto-advisor
+    - gang-deliverables-writer
+    - gang-pm-lead
+    - gang-solutions-architect
+    - gang-finance-risk-analyst
+    - gang-market-researcher
+    - gang-ux-researcher
+    - gang-business-strategist
+    - gang-domain-expert
+  external_providers:
+    perplexity:
+      enabled: false
+      api_key_env: PERPLEXITY_API_KEY
+      model: sonar-pro
+      best_for: [gang-market-researcher]
+      fallback: haiku
+    gemini:
+      enabled: false
+      api_key_env: GEMINI_API_KEY
+      model: gemini-2.5-pro
+      best_for: [gang-finance-risk-analyst, gang-business-strategist]
+      fallback: haiku
+    copilot:
+      enabled: false
+      api_key_env: GITHUB_TOKEN
+      model: gpt-4o
+      best_for: [gang-solutions-architect]
+      fallback: haiku
+
+# ─── Evidence & Assumptions ─────────────────────────────────
+evidence:
+  enabled: true
+  require_evidence_linking: true    # agents MUST cite evidence_ids in claims
+  auto_populate_from_init: true     # INIT populates from codebase + web research
+  confidence_threshold: 0.5         # minimum confidence for "trusted fact"
+  max_entries: 200
+  web_research:
+    enabled: true
+    preferred_provider: auto        # "auto" | "perplexity" | "gemini" | "claude"
+    fallback_chain: [perplexity, gemini, claude]
+    model_for_claude_fallback: sonnet
+
+# ─── Scoring Rubrics ────────────────────────────────────────
+scoring:
+  enabled: true
+  require_rubric_anchoring: true    # scores must reference a rubric level
+  require_evidence_linking: true    # each score must cite evidence_ids
+  require_assumption_linking: true  # assumptions flagged in justification
+  rubric_file: score-rubric.json    # relative to {output_root}
+  advisor_guardrails:
+    require_rubric_for_go: true     # GO requires rubric-anchored scores
+    require_validation_plans: true  # high-impact assumptions need plans
+    auto_conditional_on_unvalidated: true  # GO -> CONDITIONAL-GO if unvalidated
+
+# ─── Validation ─────────────────────────────────────────────
+validation:
+  enabled: true
+  strict: true                      # true = block on failure, false = warn only
+  validate_between_stages: true
+  validate_evidence_refs: true      # check evidence_ids exist
+  validate_assumption_refs: true    # check assumption_ids exist
+  validate_required_sections: true  # check position papers have required headings
+  validate_file_presence: true      # check expected files exist per stage
+
+# ─── Failure Handling ───────────────────────────────────────
+failure_handling:
+  enabled: true
+  retry_on_failure: true
+  max_retries: 1
+  fallback_on_failure: true         # try fallback model if primary fails
+  mark_incomplete_on_failure: true  # mark agent output as "incomplete"
+  degrade_confidence_on_failure: true  # CEO/CTO lowers confidence for missing agents
+  skip_expensive_retry_over_budget: true  # skip expensive retry if >80% budget
+
+# ─── Telemetry & Learnings ──────────────────────────────────
+telemetry:
+  enabled: true
+  auto_prompt_postmortem: true      # generate postmortem template after ADVISE
+  aggregate_learnings: true         # analyze past sessions periodically
+  learnings_dir: .gang/learnings    # global, not per-evaluation
+
+# ─── Mode Presets (reference only — selecting a mode pre-populates above) ───
+modes:
+  quick_scout:
+    description: "Fast and cheap. Directional only."
+    roles: [gang-pm-lead, gang-solutions-architect, gang-ceo-cto-advisor]
+    weight: light
+    debate: { mode: focused, max_rounds: 1 }
+    cost: { budget_limit: 1.00 }
+    validation: { strict: false }
+    evidence: { require_evidence_linking: false }
+    routing: { mode: budget-adaptive }
+  product_review:
+    description: "Balanced depth. Default for features."
+    roles: [gang-pm-lead, gang-solutions-architect, gang-finance-risk-analyst, gang-market-researcher, gang-ceo-cto-advisor]
+    weight: deep
+    debate: { mode: selective }
+    cost: { budget_limit: 5.00 }
+    validation: { strict: true }
+    evidence: { require_evidence_linking: true }
+    routing: { mode: budget-adaptive }
+  investment_grade:
+    description: "Full committee. Strict validation. External providers."
+    roles: [all]
+    weight: deep
+    debate: { mode: relevance-based }
+    cost: { budget_limit: 20.00 }
+    validation: { strict: true }
+    scoring: { require_rubric_anchoring: true }
+    routing: { mode: multi-provider }

@@ -19,7 +19,7 @@ You are NOT an analyst. The analysis is done. You are a technical writer who syn
 ## Pre-Check
 
 Before generating any documents:
-1. Read `.gang/executive-brief.md`
+1. Read `{output_root}/executive-brief.md`
 2. Check the verdict. If it's **NO-GO**, STOP and write a single file:
 
 ```markdown
@@ -33,23 +33,23 @@ The committee recommendation is NO-GO. GO Package documents are only generated f
 To regenerate after conditions change, run `/gang reinit` to refresh the analysis, then run the pipeline again.
 ```
 
-Write this to `.gang/go-package/README.md` and stop.
+Write this to `{output_root}/go-package/README.md` and stop.
 
 ## Input
 
 Read ALL of these files:
-- `.gang/context-brief.md`
-- ALL files in `.gang/position-papers/`
-- ALL files in `.gang/debate/round-2/`
-- `.gang/debate-log.md`
-- `.gang/scored-plans.md`
-- `.gang/executive-brief.md`
-- `.gang/domain-expert-profile.md` (if it exists — domain expert is optional)
-- ALL files in `.gang/ux-deliverables/` (for user stories and persona references)
+- `{output_root}/context-brief.md`
+- ALL files in `{output_root}/position-papers/`
+- ALL files in `{output_root}/debate/round-2/`
+- `{output_root}/debate-log.md`
+- `{output_root}/scored-plans.md`
+- `{output_root}/executive-brief.md`
+- `{output_root}/domain-expert-profile.md` (if it exists — domain expert is optional)
+- ALL files in `{output_root}/ux-deliverables/` (for user stories and persona references)
 
 ## Output
 
-Write 6 documents to `.gang/go-package/`:
+Write 6 documents to `{output_root}/go-package/`:
 
 ### 1. Business Requirements Document (`brd.md`)
 
@@ -419,5 +419,5 @@ Write 6 documents to `.gang/go-package/`:
 2. **Be specific** — Use actual numbers, dates, and names from the committee's analysis. No placeholders that should have been filled.
 3. **Resolve conflicts** — If experts disagreed, use the CEO/CTO Advisor's judgment as the tiebreaker.
 4. **Tag confidence** — Carry forward 🟢🟡🔴 tags from the committee's analysis into the documents.
-5. **Domain expert is optional** — If `.gang/domain-expert-profile.md` doesn't exist, skip domain-specific sections gracefully (mark as "N/A — no domain expert configured").
+5. **Domain expert is optional** — If `{output_root}/domain-expert-profile.md` doesn't exist, skip domain-specific sections gracefully (mark as "N/A — no domain expert configured").
 6. **Build-ready means build-ready** — An engineer reading these documents should be able to start coding. A PM should be able to write tickets.

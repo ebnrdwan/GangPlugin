@@ -1,22 +1,68 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge" alt="Claude Code Plugin">
-  <img src="https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge" alt="Version">
-  <img src="https://img.shields.io/badge/experts-6+1_optional+CEO-orange?style=for-the-badge" alt="Experts">
-  <img src="https://img.shields.io/badge/stages-5+deliver-success?style=for-the-badge" alt="Stages">
+  <img src="https://img.shields.io/badge/version-1.3.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/agents-9_configurable-orange?style=for-the-badge" alt="Agents">
+  <img src="https://img.shields.io/badge/features-11-brightgreen?style=for-the-badge" alt="Features">
+  <img src="https://img.shields.io/badge/stages-6-success?style=for-the-badge" alt="Stages">
   <img src="https://img.shields.io/badge/Stitch-Ready-FF6F61?style=for-the-badge" alt="Stitch Ready">
 </p>
 
-<h1 align="center">🏛️ Gang — Multi-Agent Business Committee</h1>
+<h1 align="center">Gang — Configurable Multi-Agent Business Committee</h1>
 
 <p align="center">
-  <strong>One command. Seven experts. One verdict.</strong><br/>
-  Gang turns Claude Code into a boardroom — 6 experts + 1 optional Domain Expert independently analyze your product idea,<br/>
-  debate each other's positions, and a CEO/CTO advisor delivers a scored Go/No-Go recommendation with build-ready deliverables.
+  <strong>One command. Configurable experts. Evidence-backed verdict.</strong><br/>
+  Gang turns Claude Code into a boardroom — configurable experts analyze your product idea with evidence-backed claims,<br/>
+  debate positions with rubric-anchored scoring, and a CEO/CTO advisor delivers a guardrailed Go/No-Go recommendation.
 </p>
 
 <p align="center">
   <code>/gang run</code>
 </p>
+
+---
+
+## v1.3.0 — What's New
+
+<details>
+<summary><strong>11 new features making the committee fully configurable, auditable, and cost-aware</strong></summary>
+
+### 1. Role Controls
+Enable/disable any agent, set weight (`light` = 500 words / `deep` = 1500+ words), model (`haiku`/`sonnet`/`opus`), and timeout per agent. CEO/CTO Advisor is always enabled.
+
+### 2. Selective Debate
+4 debate modes: `all-vs-all` (default), `selective` (configured pairs), `relevance-based` (auto-mapped by domain overlap), `focused` (debate specific topics only). Round 2 is always all-vs-all.
+
+### 3. Output Organization
+Save evaluations by feature (`.gang/features/{name}/`) or project (`.gang/projects/{name}/`) instead of flat. `/gang evaluations` lists all.
+
+### 4. Cost Management
+Token estimation (file bytes / 4 + overhead), budget limits with warn/block thresholds, per-stage and per-agent cost tracking in `state.json`.
+
+### 5. Adaptive Model Routing
+- **Budget-adaptive:** Auto-downgrade opus->sonnet at 60% budget, sonnet->haiku at 80%. CEO always last.
+- **Multi-provider:** Route agents to Perplexity (market research), Gemini (finance/strategy), GitHub Copilot (architecture) with fallback to Claude.
+
+### 6. Evidence Ledger
+`evidence.json` populated during INIT from codebase scan + web research (Perplexity/Gemini/Claude with configurable fallback chain). All agents MUST cite `evidence_ids` in claims.
+
+### 7. Assumptions Ledger
+`assumptions.json` where agents register unstated hypotheses with validation plans. Claims not backed by evidence become registered assumptions.
+
+### 8. Scoring Rubrics
+`score-rubric.json` with textual descriptions per level (1/3/5/7/9/10) for 6 dimensions. Scores must be rubric-anchored with evidence linking.
+
+### 9. Advisor Guardrails
+CEO/CTO Advisor cannot issue GO unless: rubric-anchored scores exist, critical assumptions have validation plans. Auto-downgrades GO -> CONDITIONAL-GO when critical assumptions are unvalidated.
+
+### 10. Validation Layer
+Schema validation, evidence/assumption cross-reference checks, required section checks, file presence verification. Runs between stages (configurable strict/relaxed). GitHub Action for CI.
+
+### 11. Quality Mode Presets
+- **Quick Scout** (~$1): 3 agents, light mode, 1 debate round
+- **Product Review** (~$5): 5 agents, deep mode, selective debate
+- **Investment Grade** (~$20): All agents, deep mode, external providers, strict validation
+
+</details>
 
 ---
 
@@ -61,40 +107,37 @@ graph LR
 Run `/gang status` at any point to see exactly where you are:
 
 ```
-🏛️ Gang Committee Status
+Gang Committee Status
 ━━━━━━━━━━━━━━━━━━━━━━━━
-Session: gang-20260329-143022
-Started: 2026-03-29
-Domain Expert: enabled
+Session: gang-20260330-143022
+Version: 1.3.0
+Mode: product_review
+Evaluation: feature — stock-details-page
 
-[✓] Stage 1: INIT — Context brief ready
-[✓] Stage 2: THINK — 7/7 position papers complete
-[✓] Stage 3: DEBATE — 2 rounds complete, debate log compiled
-[→] Stage 4: SCORE — Scoring in progress...
-[ ] Stage 5: ADVISE — Not started
-[ ] Stage 6: DELIVER — Not started (requires GO verdict)
+Committee (5 active):
+  [on]  PM Lead ............. deep (sonnet)
+  [on]  Market Researcher ... deep (perplexity-sonar-pro)
+  [off] UX Researcher ....... disabled
+  [on]  Finance Analyst ..... deep (gemini-2.5-pro)
+  [on]  Solutions Architect . deep (sonnet)
+  [off] Business Strategist . disabled
+  [off] Domain Expert ....... disabled
+  [on]  CEO/CTO Advisor ..... deep (opus)
 
-Artifacts:
-  .gang/context-brief.md .............. ✓
-  .gang/domain-expert-profile.md ...... ✓
-  .gang/competitive-scan.md ........... ✓
-  .gang/position-papers/ .............. 7 files ✓
-    ├── gang-pm-lead.md
-    ├── gang-market-researcher.md
-    ├── gang-ux-researcher.md
-    ├── gang-finance-risk-analyst.md
-    ├── gang-solutions-architect.md
-    ├── gang-business-strategist.md
-    └── gang-domain-expert.md
-  .gang/ux-deliverables/ .............. 9 files ✓
-  .gang/debate/round-1/ ............... 7 files ✓
-  .gang/debate/round-2/ ............... 7 files ✓
-  .gang/debate-log.md ................. ✓
-  .gang/scored-plans.md ............... in progress
-  .gang/executive-brief.md ............ pending
-  .gang/go-package/ ................... pending
+Debate: selective · 2 rounds
+Evidence: 14 entries · 8 assumptions tracked
+Validation: strict (passing)
 
-Next: Waiting for Stage 4 to complete, then run /gang advise
+[done] INIT ........... $0.12  validated
+[done] THINK .......... $1.23  validated (5/5 agents, 0 failures)
+[ -> ] DEBATE ......... in progress
+[    ] SCORE
+[    ] ADVISE
+[    ] DELIVER
+
+Cost: ~$1.35 / $5.00 budget (27%)
+
+Next: Run /gang debate to continue
 ```
 
 ---
@@ -205,15 +248,15 @@ graph TB
     style DE fill:#f97316,stroke:#ea580c,color:#fff
 ```
 
-| Expert | Model | What They Produce |
-|--------|-------|-------------------|
-| 📋 **PM Lead** | Sonnet | Scope definition, RICE prioritization, MoSCoW requirements, MVP boundary, PRD |
-| 🌐 **Market Researcher** | Sonnet | TAM/SAM/SOM sizing, 12-dimension competitive scoring, Porter's Five Forces, SWOT, battle cards |
-| 🎨 **UX Researcher** | Sonnet | Personas, JTBD, journey maps, wireframes, design tokens, accessibility notes, **Google Stitch instructions** |
-| 💰 **Finance/Risk Analyst** | Sonnet | DCF valuation, SaaS metrics (ARR/MRR/churn/CAC/LTV/NRR), risk matrix, scenario modeling (base/bull/bear/stress) |
-| 🏗️ **Solutions Architect** | Sonnet | Feasibility scoring, architecture, tech stack evaluation, build-vs-buy TCO, tech debt scoring, DORA metrics, ADRs |
-| 📈 **Business Strategist** | Sonnet | Business Model Canvas, GTM strategy (3 phases), competitive moat, pricing tiers, differentiation analysis |
-| 🔬 **Domain Expert** *(optional)* | Sonnet | Industry SME — regulatory landscape, domain benchmarks, table-stakes vs differentiators, compliance requirements |
+| Expert | Default Model | Multi-Provider Option | What They Produce |
+|--------|---------------|----------------------|-------------------|
+| **PM Lead** | Sonnet | — | Scope definition, RICE prioritization, MoSCoW requirements, MVP boundary, PRD |
+| **Market Researcher** | Sonnet | Perplexity sonar-pro | TAM/SAM/SOM sizing, competitive scoring, Porter's Five Forces, SWOT, battle cards |
+| **UX Researcher** | Sonnet | — | Personas, JTBD, journey maps, wireframes, design tokens, **Google Stitch instructions** |
+| **Finance/Risk Analyst** | Sonnet | Gemini 2.5 Pro | DCF valuation, SaaS metrics, risk matrix, scenario modeling (base/bull/bear/stress) |
+| **Solutions Architect** | Sonnet | GitHub Copilot (GPT-4o) | Feasibility scoring, architecture, tech stack, build-vs-buy TCO, ADRs |
+| **Business Strategist** | Sonnet | Gemini 2.5 Pro | Business Model Canvas, GTM strategy, competitive moat, pricing tiers |
+| **Domain Expert** *(optional)* | Sonnet | — | Industry SME — regulatory landscape, domain benchmarks, table-stakes vs differentiators |
 
 All agents run in **a single parallel dispatch** — you see results as each expert finishes:
 
@@ -583,18 +626,21 @@ claude plugin install https://github.com/ebnrdwan/GangPlugin
 ## 🛠️ Usage
 
 ```bash
-# 🚀 Full 5-stage pipeline
+# Full 6-stage pipeline
 /gang run
 
 # Or run stages individually
-/gang init       # 🔍 Deep scan + competitive research + domain expert opt-in + questions
-/gang think      # 🧠 6-7 experts analyze in parallel
-/gang debate     # ⚔️ 2 rounds of structured cross-review
-/gang score      # 📊 Synthesize and score competing plans
-/gang advise     # 👔 CEO/CTO executive recommendation
-/gang deliver    # 📦 Generate GO Package (BRD, architecture, charter, risk register)
-/gang reinit     # 🔄 Re-run INIT to refresh context (preserves session)
-/gang status     # 📋 Check progress and list artifacts
+/gang init         # Deep scan + evidence population + quality mode selection + questions
+/gang think        # Committee setup + parallel expert dispatch with evidence protocol
+/gang debate       # Configurable cross-review debate (4 modes)
+/gang score        # Rubric-anchored plan synthesis and scoring
+/gang advise       # CEO/CTO advisory with guardrails
+/gang deliver      # Generate GO Package (BRD, architecture, charter, risk register)
+/gang reinit       # Re-run INIT, refresh context, re-populate evidence
+/gang status       # Committee roster, progress, cost tracking, validation
+/gang config       # Show/edit .gang/config.yaml settings
+/gang evaluations  # List all feature and project evaluations
+/gang validate     # Run validation checks (schemas, refs, files)
 ```
 
 <details>
@@ -617,14 +663,18 @@ Stitch reference: web application/stitch/projects/.../screens/...
 
 ## 📁 Output Artifacts
 
-All output is written to `.gang/` in your project directory:
+All output is written to `{output_root}` (`.gang/`, `.gang/features/{name}/`, or `.gang/projects/{name}/`):
 
 ```
-.gang/
-├── 📄 state.json                    # Session tracking
+{output_root}/
+├── 📄 state.json                    # Session tracking + cost + agent results
+├── 📄 config.yaml                   # (at .gang/ root) All configuration
 ├── 📄 context-brief.md              # Project understanding + user context
 ├── 📄 competitive-scan.md           # Automated market research
-├── 📄 domain-expert-profile.md      # 🔬 Domain Expert persona (optional)
+├── 📄 evidence.json                 # Evidence ledger (codebase + web research)
+├── 📄 assumptions.json              # Assumptions ledger with validation plans
+├── 📄 score-rubric.json             # Scoring rubric (1/3/5/7/9/10 per dimension)
+├── 📄 domain-expert-profile.md      # Domain Expert persona (optional)
 │
 ├── 📂 position-papers/              # 6-7 independent expert analyses
 │   ├── gang-pm-lead.md
@@ -727,19 +777,21 @@ Multi-agent debate is [proven to reduce hallucinations](https://link.springer.co
 
 ## ⚖️ How It Compares
 
-| Capability | 💬 Generic AI Chat | 📋 PM Tools | 🏢 Strategy Consultants | 🏛️ **Gang** |
+| Capability | Generic AI Chat | PM Tools | Strategy Consultants | **Gang v1.3.0** |
 |---|---|---|---|---|
-| Understands your codebase | ❌ | ❌ | ❌ | ✅ **Deep scan** |
-| Multi-perspective analysis | ❌ | ❌ | ✅ ($$$$) | ✅ **6 experts** |
-| Adversarial debate | ❌ | ❌ | Sometimes | ✅ **2 rounds + stress-test** |
-| Quantified scoring | ❌ | Partial | ✅ | ✅ **5 dimensions** |
-| Competitive research | Manual | Manual | Manual | ✅ **Automated** |
-| UX deliverables | ❌ | ❌ | Separate engagement | ✅ **Built-in + Stitch** |
-| Kill switches | ❌ | ❌ | Sometimes | ✅ **Explicit checkpoints** |
-| Domain expertise | ❌ | ❌ | Sometimes | ✅ **Optional Domain Expert** |
-| Build-ready docs | ❌ | ❌ | Sometimes | ✅ **GO Package (BRD, arch, charter)** |
-| Lives in your IDE | ❌ | ❌ | ❌ | ✅ **One command** |
-| Cost | Free–$$$ | $8-20/seat/mo | $50K+ | ✅ **Your Claude API usage** |
+| Understands your codebase | No | No | No | **Deep scan + evidence ledger** |
+| Multi-perspective analysis | No | No | Yes ($$$$) | **9 configurable experts** |
+| Adversarial debate | No | No | Sometimes | **4 debate modes + stress-test** |
+| Evidence-backed scoring | No | No | Yes | **Rubric-anchored + evidence_ids** |
+| Competitive research | Manual | Manual | Manual | **Automated (multi-provider)** |
+| UX deliverables | No | No | Separate | **Built-in + Stitch** |
+| Kill switches | No | No | Sometimes | **Explicit checkpoints** |
+| Budget tracking | N/A | N/A | Engagement-based | **Per-stage cost tracking** |
+| Multi-provider routing | No | No | No | **Perplexity + Gemini + Copilot** |
+| Validation & audit trail | No | No | Manual | **Schema validation + CI** |
+| Build-ready docs | No | No | Sometimes | **GO Package (6 documents)** |
+| Lives in your IDE | No | No | No | **One command** |
+| Cost | Free-$$$ | $8-20/seat/mo | $50K+ | **$1-20 per evaluation** |
 
 ---
 

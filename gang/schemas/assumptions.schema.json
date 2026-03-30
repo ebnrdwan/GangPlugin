@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gang Assumptions Ledger",
+  "description": "Structured assumptions store. Agents register unstated hypotheses here.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "text", "category", "importance", "registered_by", "stage", "validation_plan", "validated"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^as-\\d{3,}$",
+        "description": "Unique assumption identifier (as-001, as-002, ...)"
+      },
+      "text": {
+        "type": "string",
+        "minLength": 10,
+        "description": "The assumption statement"
+      },
+      "category": {
+        "type": "string",
+        "enum": [
+          "user-segmentation", "market-size", "pricing", "conversion",
+          "technical", "regulatory", "competitive", "timing",
+          "resource", "behavioral", "financial", "domain-specific"
+        ],
+        "description": "Category of assumption"
+      },
+      "importance": {
+        "type": "string",
+        "enum": ["critical", "high", "medium", "low"],
+        "description": "Impact if this assumption is wrong"
+      },
+      "registered_by": {
+        "type": "string",
+        "description": "Agent that registered this assumption"
+      },
+      "stage": {
+        "type": "string",
+        "enum": ["init", "think", "debate", "score", "advise"],
+        "description": "Stage where assumption was registered"
+      },
+      "validation_plan": {
+        "type": "string",
+        "minLength": 5,
+        "description": "How to validate this assumption (interviews, data analysis, A/B test, etc.)"
+      },
+      "validated": {
+        "type": "boolean",
+        "description": "Whether this assumption has been validated"
+      },
+      "validation_result": {
+        "type": ["string", "null"],
+        "description": "Result of validation (null if not yet validated)"
+      }
+    },
+    "additionalProperties": false
+  }
+}

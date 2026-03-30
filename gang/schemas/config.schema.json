@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gang Config",
+  "description": "Configuration schema for .gang/config.yaml (validated as JSON equivalent)",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": { "type": "string" },
+    "mode": {
+      "type": "string",
+      "enum": ["quick_scout", "product_review", "investment_grade", "custom"]
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "weight": { "type": "string", "enum": ["light", "deep"] },
+          "model": { "type": "string", "enum": ["haiku", "sonnet", "opus"] },
+          "timeout": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["enabled", "weight", "model", "timeout"]
+      }
+    },
+    "debate": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "mode": { "type": "string", "enum": ["all-vs-all", "selective", "relevance-based", "focused"] },
+        "max_rounds": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "selective_pairs": { "type": "object" },
+        "focused_topics": { "type": "array", "items": { "type": "string" } },
+        "round2_mode": { "type": "string", "enum": ["all-vs-all"] }
+      }
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "evaluation_type": { "type": "string", "enum": ["flat", "feature", "project"] },
+        "evaluation_name": { "type": "string" }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "budget_limit": { "type": "number", "minimum": 0 },
+        "warn_at": { "type": "number", "minimum": 0, "maximum": 100 },
+        "block_at": { "type": "number", "minimum": 0, "maximum": 100 },
+        "model_rates": { "type": "object" }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["manual", "budget-adaptive", "multi-provider"] },
+        "downgrade_priority": { "type": "array", "items": { "type": "string" } },
+        "external_providers": { "type": "object" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "require_evidence_linking": { "type": "boolean" },
+        "auto_populate_from_init": { "type": "boolean" },
+        "confidence_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max_entries": { "type": "integer", "minimum": 1 },
+        "web_research": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "preferred_provider": { "type": "string", "enum": ["auto", "perplexity", "gemini", "claude"] },
+            "fallback_chain": { "type": "array", "items": { "type": "string" } },
+            "model_for_claude_fallback": { "type": "string" }
+          }
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "require_rubric_anchoring": { "type": "boolean" },
+        "require_evidence_linking": { "type": "boolean" },
+        "require_assumption_linking": { "type": "boolean" },
+        "rubric_file": { "type": "string" },
+        "advisor_guardrails": {
+          "type": "object",
+          "properties": {
+            "require_rubric_for_go": { "type": "boolean" },
+            "require_validation_plans": { "type": "boolean" },
+            "auto_conditional_on_unvalidated": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "strict": { "type": "boolean" },
+        "validate_between_stages": { "type": "boolean" },
+        "validate_evidence_refs": { "type": "boolean" },
+        "validate_assumption_refs": { "type": "boolean" },
+        "validate_required_sections": { "type": "boolean" },
+        "validate_file_presence": { "type": "boolean" }
+      }
+    },
+    "failure_handling": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "retry_on_failure": { "type": "boolean" },
+        "max_retries": { "type": "integer", "minimum": 0 },
+        "fallback_on_failure": { "type": "boolean" },
+        "mark_incomplete_on_failure": { "type": "boolean" },
+        "degrade_confidence_on_failure": { "type": "boolean" },
+        "skip_expensive_retry_over_budget": { "type": "boolean" }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "auto_prompt_postmortem": { "type": "boolean" },
+        "aggregate_learnings": { "type": "boolean" },
+        "learnings_dir": { "type": "string" }
+      }
+    },
+    "modes": { "type": "object" }
+  },
+  "additionalProperties": true
+}

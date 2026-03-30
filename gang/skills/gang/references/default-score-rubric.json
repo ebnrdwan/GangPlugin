@@ -1,0 +1,50 @@
+{
+  "market_viability": {
+    "1": "No identifiable market. Pure speculation with no supporting data.",
+    "3": "Small or unclear market. Weak demand signals, no competitor validation.",
+    "5": "Market exists but size uncertain. Some evidence of demand, few competitors.",
+    "7": "Clear market with evidence. Known competitors validate demand. Growth signals present.",
+    "9": "Large, growing market with strong demand signals. Multiple successful competitors.",
+    "10": "Proven market with direct user validation data and measurable willingness to pay."
+  },
+  "user_desirability": {
+    "1": "No evidence users want this. Solving a non-problem.",
+    "3": "Weak user signal. Pain exists but alternatives are good enough.",
+    "5": "Users have the pain but current solutions partially address it.",
+    "7": "Strong pain point with clear gaps in current solutions. Users actively seeking alternatives.",
+    "9": "Acute pain. Users hacking workarounds. High willingness to switch.",
+    "10": "Users already paying for inferior solutions and actively requesting this."
+  },
+  "technical_feasibility": {
+    "1": "Impossible with current stack. Requires fundamental pivot or unproven technology.",
+    "3": "Major unknowns, unproven stack, high integration risk. Months of R&D needed.",
+    "5": "Feasible but requires significant refactors, new dependencies, or expertise gaps.",
+    "7": "Feasible with known trade-offs. No blocking unknowns. Existing patterns apply.",
+    "9": "Mostly implemented or trivially achievable with current stack and team.",
+    "10": "Already built. Just needs wiring, configuration, or UI integration."
+  },
+  "financial_viability": {
+    "1": "Negative unit economics with no path to profitability.",
+    "3": "Unit economics unclear. High burn, long payback, unproven revenue model.",
+    "5": "Break-even achievable but timeline uncertain. Revenue model plausible.",
+    "7": "Positive unit economics with reasonable assumptions. Break-even within 12-18 months.",
+    "9": "Strong unit economics. Quick payback. Revenue model validated by competitors.",
+    "10": "Proven revenue model with existing paying customers or pre-sales."
+  },
+  "strategic_alignment": {
+    "1": "Contradicts current strategy. Dilutes focus. No defensible position.",
+    "3": "Tangential to strategy. Weak moat. Easily replicated by competitors.",
+    "5": "Aligned but not differentiating. Incremental improvement, not strategic advantage.",
+    "7": "Strengthens core strategy. Builds defensible position. Clear competitive advantage.",
+    "9": "Directly builds moat. Creates network effects, switching costs, or data advantages.",
+    "10": "Transformative strategic move. Redefines competitive position in the market."
+  },
+  "domain_fit": {
+    "1": "Violates fundamental industry constraints. Regulatory non-starter.",
+    "3": "Significant domain gaps. Missing table-stakes features. Regulatory risks unaddressed.",
+    "5": "Meets basic domain requirements but lacks industry depth. Generic approach.",
+    "7": "Solid domain understanding. Table-stakes covered. Key regulations addressed.",
+    "9": "Deep domain fit. Industry-specific features differentiate. Compliance built-in.",
+    "10": "Industry-native solution. Exceeds domain requirements. Competitive advantage from domain expertise."
+  }
+}

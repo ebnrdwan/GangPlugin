@@ -8,27 +8,79 @@ the Gang workflow.
 
 ## Overview
 
-The debate runs 2 rounds, following the Board Meeting's 3-phase structure:
+The debate runs 1-2 rounds (configurable via `config.debate.max_rounds`), following the Board Meeting's 3-phase structure:
 1. **Framing** — completed in Stage 2 (each expert's position paper IS their framing)
 2. **Isolation** — Round 1: independent critique without groupthink
 3. **Debate** — Round 2: respond to critiques, revise positions, surface conflicts
 
-**Note:** If the Domain Expert is enabled (`state.json.domain_expert_enabled: true`), they participate as a 7th agent in both rounds. The Domain Expert brings domain-specific critiques that generalists cannot — regulatory gaps, incorrect benchmarks, false differentiators, and industry-blind assumptions.
+**Note:** If the Domain Expert is enabled (`state.json.domain_expert_enabled: true`), they participate as an additional agent in both rounds.
+
+## Evidence Citation Rules
+
+All debate critiques and revisions MUST follow the Evidence & Assumptions Protocol:
+- **Cite evidence** when challenging a claim: "This contradicts ev-007 which states..."
+- **Register new assumptions** discovered during debate in `{output_root}/assumptions.json`
+- **Reference assumption_ids** when flagging unvalidated claims: "This relies on as-003, which is unvalidated"
+- Counter-evidence must reference evidence_ids or cite the source explicitly
+
+---
+
+## Debate Modes (v1.3.0)
+
+The orchestrator resolves the debate mode from `config.debate.mode`:
+
+### Mode 1: All-vs-All (default)
+Every agent reviews every other agent's position paper. Maximum coverage, highest cost.
+
+### Mode 2: Selective
+Each agent only reviews targets listed in `config.debate.selective_pairs`. Format:
+```yaml
+selective_pairs:
+  gang-pm-lead: [gang-market-researcher, gang-ux-researcher]
+  gang-finance-risk-analyst: [gang-solutions-architect, gang-business-strategist]
+  gang-market-researcher: [gang-pm-lead, gang-business-strategist]
+  # agents not listed review nobody (they still GET reviewed if targeted by others)
+```
+
+### Mode 3: Relevance-Based
+Auto-determined pairs based on domain overlap. Default mapping:
+| Agent | Reviews |
+|-------|---------|
+| PM Lead | Market Researcher, UX Researcher |
+| Market Researcher | PM Lead, Business Strategist |
+| UX Researcher | PM Lead, Solutions Architect |
+| Finance Analyst | Solutions Architect, Business Strategist |
+| Solutions Architect | Finance Analyst, PM Lead |
+| Business Strategist | Market Researcher, Finance Analyst |
+| Domain Expert (if enabled) | ALL agents (domain expertise applies everywhere) |
+
+### Mode 4: Focused
+All agents debate ONLY the topics listed in `config.debate.focused_topics`. Example:
+```yaml
+focused_topics:
+  - "Is the pricing model sustainable?"
+  - "Can we achieve product-market fit without enterprise sales?"
+  - "Is the technical architecture scalable to 100K users?"
+```
+Each agent addresses these questions from their domain perspective, critiquing other agents' answers.
+
+### Round 2 Mode
+`config.debate.round2_mode` is ALWAYS `all-vs-all` — every agent that received critiques MUST respond. This ensures no critique goes unanswered regardless of Round 1 mode.
 
 ---
 
 ## Round 1: Isolation Review
 
-**Goal:** Each expert independently reviews ALL other position papers and writes critiques.
+**Goal:** Each expert independently reviews target position papers (based on debate mode) and writes critiques.
 No expert sees another expert's critiques during this round (prevents anchoring bias).
 
 ### Input
 Each agent reads:
-- `.gang/context-brief.md` (original brief for reference)
-- ALL files in `.gang/position-papers/` (6 or 7 position papers depending on domain expert)
+- `{output_root}/context-brief.md` (original brief for reference)
+- ALL files in `{output_root}/position-papers/` (6 or 7 position papers depending on domain expert)
 
 ### Output
-Each agent writes to: `.gang/debate/round-1/{agent-name}-review.md`
+Each agent writes to: `{output_root}/debate/round-1/{agent-name}-review.md`
 
 ### Critique Format
 
@@ -105,12 +157,12 @@ then produces a revised position that addresses every critique directed at them.
 
 ### Input
 Each agent reads:
-- Their original position paper (`.gang/position-papers/{agent-name}.md`)
-- ALL Round 1 reviews (`.gang/debate/round-1/*.md`)
+- Their original position paper (`{output_root}/position-papers/{agent-name}.md`)
+- ALL Round 1 reviews (`{output_root}/debate/round-1/*.md`)
 - The debate protocol (this file) for format reference
 
 ### Output
-Each agent writes to: `.gang/debate/round-2/{agent-name}-revised.md`
+Each agent writes to: `{output_root}/debate/round-2/{agent-name}-revised.md`
 
 ### Revised Position Format
 
@@ -200,7 +252,7 @@ For the top 3 cross-cutting assumptions identified in Round 1:
 
 ## Debate Log
 
-After Round 2, the orchestrator compiles `.gang/debate-log.md` from all revised positions:
+After Round 2, the orchestrator compiles `{output_root}/debate-log.md` from all revised positions:
 
 ```markdown
 # Gang Debate Log — Session {session_id}
