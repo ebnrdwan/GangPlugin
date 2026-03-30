@@ -3,976 +3,788 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gang - Multi-Agent Business Committee for Claude Code</title>
-  <meta name="description" content="One command. Six experts. One verdict. Gang turns Claude Code into a boardroom with 6 domain experts and a CEO/CTO advisor.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+  <title>Gang Plugin v1.3.0 — Multi-Agent Business Committee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* Backgrounds */
-      --bg-main: #121317;
-      --bg-section: #1a1b20;
-      --bg-dark: #0d0e12;
-      --bg-card: #1f1f24;
-
-      /* Purple spectrum */
-      --purple-light: #cfbcff;
-      --purple-mid: #aa8aff;
-      --purple-deep: #6e25f6;
-      --purple-bg: rgba(63, 0, 157, 0.2);
-
-      /* Cyan */
-      --cyan: #bdf4ff;
-      --cyan-bright: #00e3fd;
-
-      /* Pink */
-      --pink: #ffabf3;
-
-      /* Coral */
-      --coral: #ffb4ab;
-
-      /* Text */
-      --text-heading: #e3e2e7;
-      --text-body: #c9c4d5;
-      --text-muted: rgba(146, 143, 158, 0.4);
-      --text-dim: rgba(146, 143, 158, 0.2);
-
-      /* Border */
-      --border-subtle: rgba(71, 69, 83, 0.1);
-      --border-light: rgba(71, 69, 83, 0.2);
+      --bg:    #0D0F1F;
+      --bg2:   #12142A;
+      --card:  rgba(255,255,255,0.04);
+      --border:rgba(255,255,255,0.08);
+      --text:  #FFFFFF;
+      --muted: #94A3B8;
+      --c1: #6366F1;
+      --c2: #8B5CF6;
+      --c3: #A855F7;
+      --c4: #EC4899;
+      --c5: #D946EF;
+      --c6: #F97316;
     }
 
-    html { scroll-behavior: smooth; }
+    html { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; scroll-behavior: smooth; }
+    body { min-height: 100vh; overflow-x: hidden; }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-main);
-      color: var(--text-body);
-      line-height: 1.6;
-      overflow-x: hidden;
+    /* ── Keyframes ── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-
-    /* ── Nav ── */
-    .nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 32px;
-      background: rgba(18, 19, 23, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 8px 16px rgba(110, 37, 246, 0.08);
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
-    .nav-logo {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 24px;
-      letter-spacing: -1.2px;
-      background: linear-gradient(150deg, #cfbcff 0%, #6e25f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-decoration: none;
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1); }
     }
-    .nav-links {
-      display: flex;
-      gap: 32px;
-      align-items: center;
-      list-style: none;
+    @keyframes glowPulse {
+      0%,100% { opacity: 0.08; transform: scale(1); }
+      50%      { opacity: 0.15; transform: scale(1.06); }
     }
-    .nav-links a {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      letter-spacing: -0.4px;
-      color: rgba(189, 244, 255, 0.6);
-      text-decoration: none;
-      transition: color 0.2s;
+    @keyframes floatY {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
     }
-    .nav-links a:hover,
-    .nav-links a.active {
-      color: var(--purple-light);
+    @keyframes connLine {
+      to { stroke-dashoffset: 0; }
     }
-    .nav-links a.active {
-      border-bottom: 2px solid var(--purple-light);
-      padding-bottom: 6px;
+    @keyframes progressFill {
+      from { width: 0; }
+      to   { width: var(--w, 100%); }
     }
-    .nav-cta {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 16px;
-      color: #3a0092;
-      background: linear-gradient(164deg, #cfbcff 0%, #6e25f6 100%);
-      border: none;
-      border-radius: 8px;
-      padding: 8px 24px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform 0.2s, box-shadow 0.2s;
+    @keyframes dotPop {
+      0%   { transform: scale(0); opacity: 0; }
+      60%  { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(1);   opacity: 1; }
     }
-    .nav-cta:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 20px rgba(110, 37, 246, 0.4);
+    @keyframes borderGlow {
+      0%,100% { box-shadow: 0 0 0 0 transparent; }
+      50%      { box-shadow: 0 0 18px 2px var(--glow-color, transparent); }
     }
 
-    /* ── Hero ── */
-    .hero {
-      position: relative;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 157px 24px;
-      overflow: hidden;
-    }
-    .hero-glow {
-      position: absolute;
-      width: 800px;
-      height: 800px;
-      border-radius: 12px;
-      background: var(--purple-bg);
-      filter: blur(60px);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 24px;
-      max-width: 896px;
-    }
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-light);
-      border-radius: 12px;
-      padding: 7px 17px;
-    }
-    .hero-badge-dot {
-      width: 8px;
-      height: 8px;
+    /* ── Glow background ── */
+    .glow-orb {
+      position: fixed; pointer-events: none; z-index: 0;
       border-radius: 50%;
-      background: var(--cyan);
+      background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+      width: 800px; height: 800px;
+      top: -300px; left: 50%; transform: translateX(-50%);
+      animation: glowPulse 5s ease-in-out infinite;
     }
-    .hero-badge-text {
-      font-family: 'Inter', sans-serif;
-      font-weight: 500;
-      font-size: 16px;
-      color: var(--cyan);
-      letter-spacing: 1.6px;
-      text-transform: uppercase;
-    }
-    .hero-title {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 800;
-      font-size: 128px;
-      letter-spacing: -6.4px;
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      padding: 88px 48px 64px;
       text-align: center;
-      background: linear-gradient(161deg, #cfbcff 0%, #aa8aff 50%, #6e25f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    }
+    .hero__badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      background: rgba(99,102,241,0.10); border: 1px solid rgba(99,102,241,0.28);
+      font-size: 12px; font-weight: 500; color: #A5B4FC; letter-spacing: 0.3px;
+      margin-bottom: 28px;
+      opacity: 0; animation: fadeSlideUp 0.7s 0.1s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .hero__title {
+      font-size: clamp(64px, 10vw, 108px);
+      font-weight: 900; letter-spacing: -4px; line-height: 1;
+      background: linear-gradient(145deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
-      line-height: 1;
+      margin-bottom: 18px;
+      opacity: 0; animation: fadeSlideUp 0.8s 0.25s cubic-bezier(0.16,1,0.3,1) forwards;
     }
-    .hero-subtitle {
-      font-size: 24px;
-      color: var(--text-body);
-      text-align: center;
-      max-width: 672px;
-      line-height: 32px;
+    .hero__subtitle {
+      font-size: 18px; color: var(--muted); font-weight: 400; line-height: 1.6;
+      max-width: 560px; margin: 0 auto 36px;
+      opacity: 0; animation: fadeSlideUp 0.7s 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
     }
-    .hero-install {
-      display: flex;
-      align-items: center;
-      background: var(--bg-dark);
-      border-radius: 8px;
-      padding: 4px;
-      margin-top: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-    .hero-install code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      color: var(--purple-light);
-      padding: 12px 24px;
-    }
-    .hero-install-copy {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 44px;
-      height: 44px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: color 0.2s;
-    }
-    .hero-install-copy:hover { color: var(--text-heading); }
-    .hero-install-copy svg { width: 17px; height: 20px; }
-    .hero-badges {
-      display: flex;
-      gap: 16px;
-      margin-top: 40px;
-      opacity: 0.7;
-    }
-    .hero-badges .badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      padding: 5px 13px;
-    }
-    .hero-badges .badge span {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: var(--text-heading);
-    }
-    .hero-badges .badge svg {
-      width: 12px;
-      height: 12px;
-      color: var(--text-body);
+    .hero__cmd {
+      display: inline-block;
+      padding: 13px 28px; border-radius: 12px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+      font-family: 'Fira Code', 'Courier New', monospace; font-size: 17px; color: #A5B4FC;
+      letter-spacing: 0.5px;
+      opacity: 0; animation: fadeSlideUp 0.7s 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
     }
 
-    /* ── Section: The Gap ── */
-    .section { padding: 128px 32px; }
-    .section--alt { background: var(--bg-section); }
-    .section--dark { background: var(--bg-dark); }
-    .container { max-width: 1280px; margin: 0 auto; width: 100%; }
+    /* ── SECTION SHELL ── */
+    .wrap { max-width: 1360px; margin: 0 auto; padding: 0 48px 64px; position: relative; z-index: 1; }
+    .sec-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+    }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-    .gap-grid {
+    /* ── PIPELINE ── */
+    .pipeline {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 64px;
-      align-items: center;
-    }
-    .gap-title {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 48px;
-      color: var(--text-heading);
-      letter-spacing: -1.2px;
-      line-height: 1;
-      margin-bottom: 32px;
-    }
-    .gap-title .highlight { color: var(--pink); }
-    .gap-text {
-      font-size: 18px;
-      color: var(--text-body);
-      line-height: 29px;
-      margin-bottom: 32px;
-    }
-    .gap-quote {
-      border-left: 4px solid var(--purple-light);
-      padding: 16px 0 16px 36px;
-      font-size: 24px;
-      color: var(--text-heading);
-      line-height: 32px;
-    }
-    .gap-visual {
-      position: relative;
-    }
-    .gap-visual-glow {
-      position: absolute;
-      inset: -16px;
-      background: linear-gradient(145deg, rgba(207, 188, 255, 0.2) 0%, rgba(255, 171, 243, 0.2) 100%);
-      filter: blur(20px);
-      opacity: 0.5;
-      border-radius: 16px;
-    }
-    .gap-visual-card {
-      position: relative;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      height: 400px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .gap-visual-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(145deg, rgba(207, 188, 255, 0.05) 0%, rgba(255, 171, 243, 0.05) 100%);
-      border-radius: 16px;
-    }
-    .gap-visual-inner {
-      position: relative;
-      text-align: center;
-    }
-    .gap-visual-inner .icon {
-      font-size: 60px;
-      margin-bottom: 16px;
-    }
-    .gap-visual-inner .label {
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--purple-light);
-      letter-spacing: 2.8px;
-      text-transform: uppercase;
-    }
-
-    /* ── Section: Strategy Flow ── */
-    .flow-header {
-      text-align: center;
-      margin-bottom: 80px;
-    }
-    .flow-header h2 {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 36px;
-      color: var(--text-heading);
-      margin-bottom: 16px;
-    }
-    .flow-header p {
-      font-size: 16px;
-      color: var(--text-body);
-    }
-    .flow-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-    .flow-card {
-      background: var(--bg-section);
-      border-radius: 8px;
-      border-left: 4px solid;
-      padding: 32px;
-      min-height: 224px;
-      display: flex;
-      flex-direction: column;
-    }
-    .flow-card--1 { border-color: var(--purple-light); }
-    .flow-card--2 { border-color: var(--cyan); }
-    .flow-card--3 { border-color: var(--pink); }
-    .flow-card--4 { border-color: var(--purple-light); }
-    .flow-card-number {
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 36px;
-      color: var(--text-dim);
-      line-height: 40px;
-      margin-bottom: 16px;
-    }
-    .flow-card-title {
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 20px;
-      color: var(--text-heading);
-      line-height: 28px;
-      margin-bottom: 6px;
-    }
-    .flow-card-desc {
-      font-size: 14px;
-      color: var(--text-body);
-      line-height: 22.75px;
-    }
-
-    /* ── Section: Command Center ── */
-    .command-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 32px;
-    }
-    .command-header-left {
-      display: flex;
-      align-items: center;
+      grid-template-columns: repeat(6, 1fr);
       gap: 12px;
     }
-    .command-header-left svg {
-      width: 20px;
-      height: 16px;
-      color: var(--text-heading);
-    }
-    .command-header-left h2 {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 24px;
-      color: var(--text-heading);
-    }
-    .command-dots {
-      display: flex;
-      gap: 8px;
-    }
-    .command-dots span {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-    .command-dots .dot-coral { background: rgba(255, 180, 171, 0.4); }
-    .command-dots .dot-cyan { background: rgba(189, 244, 255, 0.4); }
-    .command-dots .dot-purple { background: rgba(207, 188, 255, 0.4); }
-    .command-terminal {
-      background: var(--bg-dark);
-      border-left: 3px solid var(--purple-light);
+    .stage-card {
+      padding: 20px 18px 18px;
       border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      padding: 32px;
-      max-width: 1024px;
-      overflow: hidden;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
-      line-height: 22.75px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: var(--card);
+      position: relative; overflow: hidden;
+      opacity: 0;
+      animation: scaleIn 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+      cursor: default;
     }
-    .command-terminal .prompt {
-      color: var(--text-muted);
-      margin-bottom: 16px;
+    .stage-card:hover { transform: translateY(-5px); }
+    .stage-card::before {
+      content: ''; position: absolute; inset: 0; border-radius: 16px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.045) 0%, transparent 55%);
+      opacity: 0; transition: opacity 0.3s;
     }
-    .command-terminal .output { color: var(--text-body); }
-    .command-terminal .heading {
-      color: var(--text-heading);
-      font-weight: 600;
-    }
-    .command-terminal .tag-active {
-      display: inline-block;
-      background: rgba(0, 227, 253, 0.15);
-      color: var(--cyan-bright);
-      padding: 1px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .command-terminal .tag-done {
-      display: inline-block;
-      background: rgba(207, 188, 255, 0.15);
-      color: var(--purple-light);
-      padding: 1px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .command-terminal .tag-pending {
-      display: inline-block;
-      background: rgba(146, 143, 158, 0.1);
-      color: var(--text-muted);
-      padding: 1px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-    .command-terminal .progress-bar {
-      display: inline-block;
-      width: 160px;
-      height: 6px;
-      background: rgba(146, 143, 158, 0.1);
-      border-radius: 3px;
-      overflow: hidden;
-      vertical-align: middle;
-    }
-    .command-terminal .progress-fill {
-      display: block;
-      height: 100%;
-      background: linear-gradient(90deg, var(--purple-light), var(--purple-mid));
-      border-radius: 3px;
-    }
-    .terminal-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin: 4px 0;
-      flex-wrap: wrap;
-    }
-    .terminal-label {
-      min-width: 140px;
-      color: var(--text-body);
+    .stage-card:hover::before { opacity: 1; }
+
+    /* Stage accent top bar */
+    .stage-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 16px 16px 0 0;
+      background: var(--stage-color, #fff);
+      opacity: 0.7;
     }
 
-    /* ── Section: Committee ── */
-    .committee-header {
-      margin-bottom: 48px;
-    }
-    .committee-header h2 {
-      font-family: 'Manrope', sans-serif;
-      font-weight: 700;
-      font-size: 48px;
-      color: var(--text-heading);
-      letter-spacing: -1.2px;
-      margin-bottom: 16px;
-    }
-    .committee-header p {
-      font-size: 18px;
-      color: var(--text-body);
-      max-width: 600px;
-    }
-    .committee-header-top {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-    }
-    .committee-opus-badge {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      background: rgba(170, 138, 255, 0.08);
-      border: 1px solid rgba(170, 138, 255, 0.15);
-      border-radius: 12px;
-      padding: 16px 20px;
+    .stage-card:nth-child(1) { --stage-color: var(--c1); animation-delay: 0.7s; }
+    .stage-card:nth-child(2) { --stage-color: var(--c2); animation-delay: 0.9s; }
+    .stage-card:nth-child(3) { --stage-color: var(--c3); animation-delay: 1.1s; }
+    .stage-card:nth-child(4) { --stage-color: var(--c4); animation-delay: 1.3s; }
+    .stage-card:nth-child(5) { --stage-color: var(--c5); animation-delay: 1.5s; }
+    .stage-card:nth-child(6) { --stage-color: var(--c6); animation-delay: 1.7s; }
+
+    .stage-card:nth-child(1):hover { box-shadow: 0 8px 32px rgba(99,102,241,0.18); }
+    .stage-card:nth-child(2):hover { box-shadow: 0 8px 32px rgba(139,92,246,0.18); }
+    .stage-card:nth-child(3):hover { box-shadow: 0 8px 32px rgba(168,85,247,0.18); }
+    .stage-card:nth-child(4):hover { box-shadow: 0 8px 32px rgba(236,72,153,0.18); }
+    .stage-card:nth-child(5):hover { box-shadow: 0 8px 32px rgba(217,70,239,0.18); }
+    .stage-card:nth-child(6):hover { box-shadow: 0 8px 32px rgba(249,115,22,0.18); }
+
+    .stage-num {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+      background: var(--stage-color, #fff);
+      margin-bottom: 14px;
       flex-shrink: 0;
     }
-    .committee-opus-badge .icon { font-size: 28px; }
-    .committee-opus-badge .label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--purple-light);
-      letter-spacing: 1px;
-      text-transform: uppercase;
+    .stage-card:nth-child(1) .stage-num { box-shadow: 0 0 14px rgba(99,102,241,0.55); }
+    .stage-card:nth-child(2) .stage-num { box-shadow: 0 0 14px rgba(139,92,246,0.55); }
+    .stage-card:nth-child(3) .stage-num { box-shadow: 0 0 14px rgba(168,85,247,0.55); }
+    .stage-card:nth-child(4) .stage-num { box-shadow: 0 0 14px rgba(236,72,153,0.55); }
+    .stage-card:nth-child(5) .stage-num { box-shadow: 0 0 14px rgba(217,70,239,0.55); }
+    .stage-card:nth-child(6) .stage-num { box-shadow: 0 0 14px rgba(249,115,22,0.55); }
+
+    .stage-name { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .stage-sub  { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+
+    .stage-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      font-size: 10px; font-weight: 500;
+      padding: 3px 8px; border-radius: 6px;
+      background: rgba(var(--tag-rgb, 255,255,255), 0.10);
+      color: var(--tag-text, var(--muted));
     }
-    .committee-opus-badge .sublabel {
-      font-size: 10px;
-      color: var(--text-muted);
+    .stage-card:nth-child(1) .tag { --tag-rgb: 99,102,241; --tag-text: #A5B4FC; }
+    .stage-card:nth-child(2) .tag { --tag-rgb: 139,92,246;  --tag-text: #C4B5FD; }
+    .stage-card:nth-child(3) .tag { --tag-rgb: 168,85,247;  --tag-text: #D8B4FE; }
+    .stage-card:nth-child(4) .tag { --tag-rgb: 236,72,153;  --tag-text: #F9A8D4; }
+    .stage-card:nth-child(5) .tag { --tag-rgb: 217,70,239;  --tag-text: #F0ABFC; }
+    .stage-card:nth-child(6) .tag { --tag-rgb: 249,115,22;  --tag-text: #FED7AA; }
+
+    /* ── FLOW ARROW ── */
+    .flow-arrows {
+      display: flex; align-items: center; gap: 0;
+      margin: 16px 0 40px;
+      opacity: 0; animation: fadeIn 0.6s 2.0s forwards;
     }
-    .committee-grid {
+    .flow-step {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 6px; font-size: 11px; color: var(--muted); text-align: center;
+    }
+    .flow-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--stage-color, var(--muted));
+    }
+    .flow-step:nth-child(1) .flow-dot { background: var(--c1); box-shadow: 0 0 8px var(--c1); }
+    .flow-step:nth-child(2) .flow-dot { background: var(--c2); box-shadow: 0 0 8px var(--c2); }
+    .flow-step:nth-child(3) .flow-dot { background: var(--c3); box-shadow: 0 0 8px var(--c3); }
+    .flow-step:nth-child(4) .flow-dot { background: var(--c4); box-shadow: 0 0 8px var(--c4); }
+    .flow-step:nth-child(5) .flow-dot { background: var(--c5); box-shadow: 0 0 8px var(--c5); }
+    .flow-step:nth-child(6) .flow-dot { background: var(--c6); box-shadow: 0 0 8px var(--c6); }
+    .flow-conn {
+      width: 40px; height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.25));
+      position: relative; top: -11px;
+    }
+
+    /* ── AGENTS ── */
+    .agents-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
     }
     .agent-card {
-      background: rgba(31, 31, 36, 0.4);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 32px;
-      min-height: 281px;
-      position: relative;
+      padding: 18px 16px 16px;
+      border-radius: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.25s, transform 0.25s;
+      position: relative; overflow: hidden;
     }
-    .agent-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 24px;
-      font-size: 22px;
-    }
-    .agent-icon--purple { background: rgba(170, 138, 255, 0.1); }
-    .agent-icon--cyan { background: rgba(0, 227, 253, 0.1); }
-    .agent-icon--pink { background: rgba(255, 171, 243, 0.1); }
-    .agent-icon--coral { background: rgba(255, 180, 171, 0.1); }
-    .agent-icon--green { background: rgba(189, 244, 130, 0.1); }
+    .agent-card:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-3px); }
+    .agent-card:nth-child(1) { animation-delay: 2.2s; }
+    .agent-card:nth-child(2) { animation-delay: 2.35s; }
+    .agent-card:nth-child(3) { animation-delay: 2.5s; }
+    .agent-card:nth-child(4) { animation-delay: 2.65s; }
+    .agent-card:nth-child(5) { animation-delay: 2.8s; }
+    .agent-card:nth-child(6) { animation-delay: 2.95s; }
+    .agent-card:nth-child(7) { animation-delay: 3.1s; }
+    .agent-card:nth-child(8) { animation-delay: 3.25s; }
+    .agent-card:nth-child(9) { animation-delay: 3.4s; }
 
-    .agent-card h3 {
-      font-family: 'Inter', sans-serif;
+    .agent-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      display: inline-block; margin-right: 8px; vertical-align: middle;
+    }
+    .agent-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
+    .agent-model {
+      display: inline-block; font-size: 10px; font-weight: 500;
+      padding: 3px 9px; border-radius: 7px;
+      background: rgba(255,255,255,0.06); color: var(--muted);
+    }
+    .agent-role { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+
+    /* ── COST BAR ── */
+    .cost-section {
+      margin-bottom: 64px; padding: 28px 32px; border-radius: 20px;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      opacity: 0; animation: fadeIn 0.7s 3.5s forwards;
+    }
+    .cost-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+    .cost-bar-bg {
+      height: 8px; border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden; margin-bottom: 12px; position: relative;
+    }
+    .cost-bar-fill {
+      height: 100%; border-radius: 4px;
+      background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c6));
+      width: 0;
+      animation: progressFill 2.2s 3.8s cubic-bezier(0.16,1,0.3,1) forwards;
+      --w: 72%;
+    }
+    .cost-markers { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    .cost-marker-mid {
+      position: absolute; top: 0; height: 100%;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .cost-label-row {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    }
+    .cost-chip {
+      font-size: 11px; padding: 3px 10px; border-radius: 7px;
       font-weight: 600;
-      font-size: 24px;
-      color: var(--text-heading);
-      margin-bottom: 8px;
     }
-    .agent-tag {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 10px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-    .agent-tag--purple { background: rgba(170, 138, 255, 0.2); color: var(--purple-mid); }
-    .agent-tag--cyan { background: rgba(0, 227, 253, 0.2); color: var(--cyan-bright); }
-    .agent-tag--pink { background: rgba(255, 171, 243, 0.2); color: var(--pink); }
-    .agent-tag--coral { background: rgba(255, 180, 171, 0.2); color: var(--coral); }
-    .agent-tag--green { background: rgba(189, 244, 130, 0.2); color: #bdf482; }
+    .cost-chip--warn { background: rgba(236,72,153,0.12); color: #F9A8D4; }
+    .cost-chip--info { background: rgba(99,102,241,0.12); color: #A5B4FC; }
 
-    .agent-card p {
-      font-size: 14px;
-      color: var(--text-body);
-      line-height: 22.75px;
+    /* ── QUALITY MODES ── */
+    .modes-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 16px;
+    }
+    .mode-card {
+      padding: 28px 24px 24px; border-radius: 18px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: scaleIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: transform 0.28s, border-color 0.28s;
+      position: relative; overflow: hidden;
+    }
+    .mode-card:hover { transform: translateY(-4px); }
+    .mode-card:nth-child(1) { animation-delay: 3.7s; border-color: rgba(99,102,241,0.18); }
+    .mode-card:nth-child(2) { animation-delay: 3.9s; border-color: rgba(139,92,246,0.22); }
+    .mode-card:nth-child(3) { animation-delay: 4.1s; border-color: rgba(249,115,22,0.18); }
+    .mode-card:nth-child(1):hover { box-shadow: 0 8px 32px rgba(99,102,241,0.12); }
+    .mode-card:nth-child(2):hover { box-shadow: 0 8px 32px rgba(139,92,246,0.15); }
+    .mode-card:nth-child(3):hover { box-shadow: 0 8px 32px rgba(249,115,22,0.12); }
+    .mode-card::before {
+      content: ''; position: absolute;
+      inset: 0; border-radius: 18px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.035) 0%, transparent 50%);
+    }
+    .mode-badge {
+      display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 7px; margin-bottom: 14px;
+    }
+    .mode-card:nth-child(1) .mode-badge { background: rgba(99,102,241,0.15); color: #A5B4FC; }
+    .mode-card:nth-child(2) .mode-badge { background: rgba(139,92,246,0.15); color: #C4B5FD; }
+    .mode-card:nth-child(3) .mode-badge { background: rgba(249,115,22,0.15); color: #FED7AA; }
+    .mode-name { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .mode-cost {
+      font-size: 32px; font-weight: 900; letter-spacing: -1.5px; margin: 10px 0 8px;
+    }
+    .mode-card:nth-child(1) .mode-cost { color: #A5B4FC; }
+    .mode-card:nth-child(2) .mode-cost { color: #C4B5FD; }
+    .mode-card:nth-child(3) .mode-cost { color: #FED7AA; }
+    .mode-desc { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 16px; }
+    .mode-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .mode-chip {
+      font-size: 10px; padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.06); color: var(--muted); font-weight: 500;
     }
 
-    /* ── Footer ── */
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;
+    }
+    .feature-card {
+      padding: 20px; border-radius: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 16px;
+      opacity: 0; animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.25s, transform 0.25s;
+    }
+    .feature-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .feature-card:nth-child(1)  { animation-delay: 4.4s; }
+    .feature-card:nth-child(2)  { animation-delay: 4.5s; }
+    .feature-card:nth-child(3)  { animation-delay: 4.6s; }
+    .feature-card:nth-child(4)  { animation-delay: 4.7s; }
+    .feature-card:nth-child(5)  { animation-delay: 4.8s; }
+    .feature-card:nth-child(6)  { animation-delay: 4.9s; }
+    .feature-card:nth-child(7)  { animation-delay: 5.0s; }
+    .feature-card:nth-child(8)  { animation-delay: 5.1s; }
+    .feature-card:nth-child(9)  { animation-delay: 5.2s; }
+    .feature-card:nth-child(10) { animation-delay: 5.3s; }
+    .feature-card:nth-child(11) { animation-delay: 5.4s; }
+    .feature-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+      background: rgba(255,255,255,0.05);
+    }
+    .feature-title { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+    .feature-desc  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+    /* ── COMMANDS ── */
+    .commands-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px;
+    }
+    .cmd-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.25s;
+    }
+    .cmd-row:hover { border-color: rgba(255,255,255,0.16); }
+    .cmd-row:nth-child(1)  { animation-delay: 5.6s; }
+    .cmd-row:nth-child(2)  { animation-delay: 5.7s; }
+    .cmd-row:nth-child(3)  { animation-delay: 5.8s; }
+    .cmd-row:nth-child(4)  { animation-delay: 5.9s; }
+    .cmd-row:nth-child(5)  { animation-delay: 6.0s; }
+    .cmd-row:nth-child(6)  { animation-delay: 6.1s; }
+    .cmd-row:nth-child(7)  { animation-delay: 6.2s; }
+    .cmd-row:nth-child(8)  { animation-delay: 6.3s; }
+    .cmd-row:nth-child(9)  { animation-delay: 6.4s; }
+    .cmd-row:nth-child(10) { animation-delay: 6.5s; }
+    .cmd-row:nth-child(11) { animation-delay: 6.6s; }
+    .cmd-code {
+      font-family: 'Fira Code', 'Courier New', monospace; font-size: 13px;
+      color: #A5B4FC; white-space: nowrap; font-weight: 500;
+    }
+    .cmd-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+    /* ── FOOTER ── */
     .footer {
-      background: var(--bg-dark);
-      border-top: 1px solid rgba(207, 188, 255, 0.05);
-      padding: 48px 32px;
+      text-align: center; padding: 64px 48px 72px;
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      opacity: 0; animation: fadeIn 0.8s 7s forwards;
     }
-    .footer-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .footer-tagline { font-size: 16px; color: var(--muted); margin-bottom: 24px; }
+    .footer-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 36px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--c1), var(--c3));
+      font-size: 15px; font-weight: 600; color: #fff;
+      text-decoration: none; transition: opacity 0.25s, transform 0.25s;
     }
-    .footer-copy {
-      font-size: 12px;
-      color: #64748b;
-    }
-    .footer-links {
-      display: flex;
-      gap: 32px;
-    }
-    .footer-links a {
-      font-size: 12px;
-      color: #475569;
-      text-decoration: underline;
-      opacity: 0.8;
-      transition: opacity 0.2s;
-    }
-    .footer-links a:hover { opacity: 1; }
-    .footer-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .footer-meta svg {
-      width: 16px;
-      height: 20px;
-      color: var(--text-muted);
-    }
-    .footer-meta span {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      color: var(--text-muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
+    .footer-cta:hover { opacity: 0.88; transform: translateY(-2px); }
+    .footer-version {
+      margin-top: 24px; font-size: 12px; color: rgba(255,255,255,0.2);
     }
 
-    /* ── Responsive ── */
-    @media (max-width: 1024px) {
-      .gap-grid { grid-template-columns: 1fr; }
-      .flow-grid { grid-template-columns: repeat(2, 1fr); }
-      .committee-grid { grid-template-columns: repeat(2, 1fr); }
-      .hero-title { font-size: 72px; letter-spacing: -3px; }
-      .nav-links { display: none; }
-    }
-    @media (max-width: 640px) {
-      .flow-grid { grid-template-columns: 1fr; }
-      .committee-grid { grid-template-columns: 1fr; }
-      .hero-title { font-size: 48px; letter-spacing: -2px; }
-      .hero-subtitle { font-size: 18px; }
-      .hero-install code { font-size: 13px; }
-      .gap-title { font-size: 32px; }
-      .gap-quote { font-size: 18px; }
-      .footer-inner { flex-direction: column; gap: 24px; text-align: center; }
-      .footer-links { flex-wrap: wrap; justify-content: center; }
-      .hero-badges { flex-wrap: wrap; justify-content: center; }
-      .committee-header-top { flex-direction: column; gap: 24px; }
-      .section { padding: 80px 20px; }
-    }
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 0 0 56px; }
 
-    /* ── Animations ── */
-    @media (prefers-reduced-motion: no-preference) {
-      .fade-in {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-      }
-      .fade-in.visible {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .pipeline { grid-template-columns: repeat(3,1fr); }
+      .modes-grid { grid-template-columns: 1fr; }
+      .wrap { padding: 0 24px 48px; }
+      .hero { padding: 64px 24px 48px; }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .fade-in { opacity: 1; transform: none; }
+    @media (max-width: 600px) {
+      .pipeline { grid-template-columns: repeat(2,1fr); }
+      .agents-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav class="nav">
-    <a href="#" class="nav-logo">Gang</a>
-    <ul class="nav-links">
-      <li><a href="#gap" class="active">The Gap</a></li>
-      <li><a href="#flow">How It Works</a></li>
-      <li><a href="#committee">The Committee</a></li>
-      <li><a href="#status">Status</a></li>
-      <li><a href="https://github.com/ebnrdwan/GangPlugin" target="_blank">Docs</a></li>
-    </ul>
-    <a href="#install" class="nav-cta">Quick Start</a>
-  </nav>
+<div class="glow-orb"></div>
 
-  <!-- Hero -->
-  <section class="hero" id="top">
-    <div class="hero-glow"></div>
-    <div class="hero-content">
-      <div class="hero-badge">
-        <span class="hero-badge-dot"></span>
-        <span class="hero-badge-text">V1.1.0 Sovereign Intelligence</span>
-      </div>
-      <h1 class="hero-title">Gang</h1>
-      <p class="hero-subtitle">
-        The multi-agent business committee for Claude Code.<br>
-        Ensuring your architectural precision meets market sovereignty.
-      </p>
-      <div class="hero-install" id="install">
-        <code>npm install -g @claude-gang/cli</code>
-        <button class="hero-install-copy" onclick="navigator.clipboard.writeText('npm install -g @claude-gang/cli')" title="Copy to clipboard">
-          <svg viewBox="0 0 17 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="5" y="4" width="11" height="14" rx="2"/>
-            <path d="M1 14V3a2 2 0 012-2h8"/>
-          </svg>
-        </button>
-      </div>
-      <div class="hero-badges">
-        <div class="badge">
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 7l2 2 4-4"/><circle cx="7" cy="7" r="6"/></svg>
-          <span>Expert Vetted</span>
-        </div>
-        <div class="badge">
-          <svg viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 3l6 4 6-4M1 3v6a2 2 0 002 2h8a2 2 0 002-2V3M1 3a2 2 0 012-2h8a2 2 0 012 2"/></svg>
-          <span>Claude Code Native</span>
-        </div>
-        <div class="badge">
-          <svg viewBox="0 0 12 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 1L1 4v4c0 3.3 2.1 5.3 5 6 2.9-.7 5-2.7 5-6V4L6 1z"/></svg>
-          <span>Secure Governance</span>
-        </div>
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="hero__badge">⚡ v1.3.0 &nbsp;·&nbsp; Configurable &nbsp;·&nbsp; Auditable &nbsp;·&nbsp; Cost-Aware</div>
+  <h1 class="hero__title">Gang</h1>
+  <p class="hero__subtitle">Configurable Multi-Agent Business Committee for Claude Code.<br>One command. Expert analysis. Evidence-backed verdict.</p>
+  <code class="hero__cmd">/gang run</code>
+</header>
+
+<!-- ── PIPELINE ── -->
+<div class="wrap">
+  <p class="sec-label">6-Stage Pipeline</p>
+
+  <div class="pipeline">
+    <!-- INIT -->
+    <div class="stage-card">
+      <div class="stage-num">1</div>
+      <div class="stage-name">INIT</div>
+      <div class="stage-sub">Scan + Evidence Population</div>
+      <div class="stage-tags">
+        <span class="tag">Codebase Scan</span>
+        <span class="tag">evidence.json</span>
+        <span class="tag">Quality Mode</span>
+        <span class="tag">Score Rubric</span>
+        <span class="tag">Web Research</span>
       </div>
     </div>
-  </section>
 
-  <!-- The Gap -->
-  <section class="section section--alt" id="gap">
-    <div class="container">
-      <div class="gap-grid">
-        <div class="fade-in">
-          <h2 class="gap-title">The Gap: <span class="highlight">Architectural<br>Blindness</span></h2>
-          <p class="gap-text">
-            Developers often build perfect solutions for the wrong problems.
-            "Gang" bridges the abyss between technical execution and
-            executive strategy.
-          </p>
-          <blockquote class="gap-quote">
-            "The most dangerous path is the one paved
-            with brilliant code that serves no market
-            purpose."
-          </blockquote>
-        </div>
-        <div class="gap-visual fade-in">
-          <div class="gap-visual-glow"></div>
-          <div class="gap-visual-card">
-            <div class="gap-visual-inner">
-              <div class="icon">&#9878;&#65039;</div>
-              <div class="label">Strategic Alignment</div>
-            </div>
-          </div>
-        </div>
+    <!-- THINK -->
+    <div class="stage-card">
+      <div class="stage-num">2</div>
+      <div class="stage-name">THINK</div>
+      <div class="stage-sub">Committee + Parallel Experts</div>
+      <div class="stage-tags">
+        <span class="tag">7 Experts</span>
+        <span class="tag">Evidence Protocol</span>
+        <span class="tag">Assumptions</span>
+        <span class="tag">Light / Deep</span>
       </div>
     </div>
-  </section>
 
-  <!-- The Strategy Flow -->
-  <section class="section" id="flow">
-    <div class="container">
-      <div class="flow-header fade-in">
-        <h2>The Strategy Flow</h2>
-        <p>Autonomous consensus across the technical-business spectrum.</p>
-      </div>
-      <div class="flow-grid">
-        <div class="flow-card flow-card--1 fade-in">
-          <div class="flow-card-number">01</div>
-          <div class="flow-card-title">Ingestion</div>
-          <p class="flow-card-desc">Gang scrapes your local repository and Claude Code conversation context.</p>
-        </div>
-        <div class="flow-card flow-card--2 fade-in">
-          <div class="flow-card-number">02</div>
-          <div class="flow-card-title">Deliberation</div>
-          <p class="flow-card-desc">Six specialized agents argue from their unique business perspectives.</p>
-        </div>
-        <div class="flow-card flow-card--3 fade-in">
-          <div class="flow-card-number">03</div>
-          <div class="flow-card-title">Resolution</div>
-          <p class="flow-card-desc">The CEO Advisor synthesizes conflict into a coherent strategic roadmap.</p>
-        </div>
-        <div class="flow-card flow-card--4 fade-in">
-          <div class="flow-card-number">04</div>
-          <div class="flow-card-title">Execution</div>
-          <p class="flow-card-desc">Receive structured markdown report or direct Claude Code task injection.</p>
-        </div>
+    <!-- DEBATE -->
+    <div class="stage-card">
+      <div class="stage-num">3</div>
+      <div class="stage-name">DEBATE</div>
+      <div class="stage-sub">Cross-Review · 4 Modes</div>
+      <div class="stage-tags">
+        <span class="tag">all-vs-all</span>
+        <span class="tag">selective</span>
+        <span class="tag">relevance</span>
+        <span class="tag">focused</span>
       </div>
     </div>
-  </section>
 
-  <!-- Command Center -->
-  <section class="section section--alt" id="status">
-    <div class="container" style="max-width:1024px;">
-      <div class="command-header fade-in">
-        <div class="command-header-left">
-          <svg viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="18" height="14" rx="2"/>
-            <path d="M5 5l3 3-3 3"/>
-            <line x1="11" y1="11" x2="15" y2="11"/>
-          </svg>
-          <h2>Command Center</h2>
-        </div>
-        <div class="command-dots">
-          <span class="dot-coral"></span>
-          <span class="dot-cyan"></span>
-          <span class="dot-purple"></span>
-        </div>
-      </div>
-      <div class="command-terminal fade-in">
-        <div class="prompt">$ /gang status --verbose</div>
-        <br>
-        <div class="output">
-          <div class="heading" style="margin-bottom:12px;">GANG INITIALIZED: Committee Session...</div>
-          <div style="color:var(--text-muted);margin-bottom:16px;">Init Connection to Claude Code EdgeSocket [agent-to-agent mesh]</div>
-          <div class="terminal-row">
-            <span class="terminal-label" style="color:var(--text-heading)">Product Manager</span>
-            <span class="tag-active">ACTIVE</span>
-            <span class="terminal-label" style="color:var(--text-heading)">AI Strategist</span>
-            <span class="tag-active">ACTIVE</span>
-          </div>
-          <div class="terminal-row">
-            <span class="terminal-label" style="color:var(--text-heading)">Finance Lead</span>
-            <span class="tag-done" style="background:rgba(0,227,253,0.15);color:var(--cyan-bright);">BRIEFING</span>
-            <span class="terminal-label" style="color:var(--text-heading)">Market Intel</span>
-            <span class="tag-done">ANALYSIS</span>
-          </div>
-          <div class="terminal-row" style="margin-top:16px;">
-            <span class="terminal-label">Analytical Progress</span>
-            <span class="progress-bar" style="width:200px;"><span class="progress-fill" style="width:72%;"></span></span>
-            <span style="color:var(--purple-light);font-size:12px;">72%</span>
-          </div>
-          <div style="color:var(--text-muted);margin-top:16px;font-size:12px;">
-            Status: PHASE_02: All deliberation includes adversarial stress tests on Industry model Assumptions. Generating Risk mapping solutions..
-          </div>
-        </div>
+    <!-- SCORE -->
+    <div class="stage-card">
+      <div class="stage-num">4</div>
+      <div class="stage-name">SCORE</div>
+      <div class="stage-sub">Rubric-Anchored Synthesis</div>
+      <div class="stage-tags">
+        <span class="tag">Rubric 1–10</span>
+        <span class="tag">Evidence IDs</span>
+        <span class="tag">Weighted Avg</span>
+        <span class="tag">Confidence</span>
       </div>
     </div>
-  </section>
 
-  <!-- The Executive Committee -->
-  <section class="section" id="committee">
-    <div class="container">
-      <div class="committee-header fade-in">
-        <div class="committee-header-top">
-          <div>
-            <h2>The Executive Committee</h2>
-            <p>Each agent is prototyped with a distinct professional persona, covering risks, focus, and goal alignments.</p>
-          </div>
-          <div class="committee-opus-badge">
-            <span class="icon">&#128081;</span>
-            <span class="label">CEO/CTO Advisor</span>
-            <span class="sublabel">runs on Claude Opus</span>
-          </div>
-        </div>
-      </div>
-      <div class="committee-grid">
-        <!-- Product Manager -->
-        <div class="agent-card fade-in">
-          <div class="agent-icon agent-icon--purple">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aa8aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
-          </div>
-          <h3>Product Manager</h3>
-          <span class="agent-tag agent-tag--purple">Prioritization</span>
-          <p>Delivers the 'What' and 'Why': Focuses on MVP scope, RICE scoring, and user-story discovery.</p>
-        </div>
-
-        <!-- Market Analyst -->
-        <div class="agent-card fade-in">
-          <div class="agent-icon agent-icon--cyan">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e3fd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-          </div>
-          <h3>Market Analyst</h3>
-          <span class="agent-tag agent-tag--cyan">Intelligence</span>
-          <p>Analyzes external trends, competitive positioning, and market-fit readiness.</p>
-        </div>
-
-        <!-- UX Strategist -->
-        <div class="agent-card fade-in">
-          <div class="agent-icon agent-icon--pink">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffabf3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
-          </div>
-          <h3>UX Strategist</h3>
-          <span class="agent-tag agent-tag--pink">Experience</span>
-          <p>Advocates for the customer: Develops complex interaction flows and persona-driven solutions.</p>
-        </div>
-
-        <!-- Finance Lead -->
-        <div class="agent-card fade-in">
-          <div class="agent-icon agent-icon--coral">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffb4ab" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <h3>Finance Lead</h3>
-          <span class="agent-tag agent-tag--coral">Risk Analysis</span>
-          <p>Evaluates cost projections, resource allocation, and ROI of each proposed development sprint.</p>
-        </div>
-
-        <!-- Solution Architect -->
-        <div class="agent-card fade-in">
-          <div class="agent-icon agent-icon--purple">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aa8aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="6 8 10 12 6 16"/><line x1="13" y1="16" x2="18" y2="16"/></svg>
-          </div>
-          <h3>Solution Architect</h3>
-          <span class="agent-tag agent-tag--purple">Scalability</span>
-          <p>Ensures the proposed code patterns are sustainable, maintainable, and highly performant.</p>
-        </div>
-
-        <!-- Business Operations -->
-        <div class="agent-card fade-in">
-          <div class="agent-icon agent-icon--cyan">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e3fd" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          </div>
-          <h3>Business Operations</h3>
-          <span class="agent-tag agent-tag--cyan">Compliance</span>
-          <p>Focuses on legal compliance, internal process alignment, and high-level stakeholder reporting.</p>
-        </div>
-
-        <!-- Domain Expert (Optional) -->
-        <div class="agent-card fade-in" style="border-color: rgba(249, 115, 22, 0.25);">
-          <div class="agent-icon" style="background: rgba(249, 115, 22, 0.08); border-color: rgba(249, 115, 22, 0.2);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
-          </div>
-          <h3>Domain Expert <span style="font-size: 11px; opacity: 0.6; font-weight: 400;">(Optional)</span></h3>
-          <span class="agent-tag" style="background: rgba(249, 115, 22, 0.1); color: #f97316; border-color: rgba(249, 115, 22, 0.2);">Industry SME</span>
-          <p>User-configurable industry specialist. Validates assumptions against real-world domain knowledge — regulatory, benchmarks, and table-stakes.</p>
-        </div>
+    <!-- ADVISE -->
+    <div class="stage-card">
+      <div class="stage-num">5</div>
+      <div class="stage-name">ADVISE</div>
+      <div class="stage-sub">CEO/CTO · Guardrails</div>
+      <div class="stage-tags">
+        <span class="tag">GO</span>
+        <span class="tag">CONDITIONAL-GO</span>
+        <span class="tag">NO-GO</span>
+        <span class="tag">Opus Model</span>
       </div>
     </div>
-  </section>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <span class="footer-copy">&copy; 2025 Gang Executive Committee. All rights reserved.</span>
-      <div class="footer-links">
-        <a href="https://github.com/ebnrdwan/GangPlugin">Architecture</a>
-        <a href="https://github.com/ebnrdwan/GangPlugin">Governance</a>
-        <a href="https://github.com/ebnrdwan/GangPlugin">Security</a>
-        <a href="https://github.com/ebnrdwan">Contact</a>
-      </div>
-      <div class="footer-meta">
-        <svg viewBox="0 0 16 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v18M1 8l7-7 7 7"/></svg>
-        <span>Sovereign Intelligence Protocol</span>
+    <!-- DELIVER -->
+    <div class="stage-card">
+      <div class="stage-num">6</div>
+      <div class="stage-name">DELIVER</div>
+      <div class="stage-sub">GO Package Output</div>
+      <div class="stage-tags">
+        <span class="tag">BRD</span>
+        <span class="tag">Architecture</span>
+        <span class="tag">Charter</span>
+        <span class="tag">Risk Register</span>
+        <span class="tag">API Contracts</span>
       </div>
     </div>
-  </footer>
+  </div>
 
-  <!-- Scroll animation -->
-  <script>
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-  </script>
+  <!-- Flow indicator -->
+  <div class="flow-arrows" style="margin-top:16px;">
+    <div class="flow-step"><div class="flow-dot"></div><span>INIT</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>THINK</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>DEBATE</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>SCORE</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>ADVISE</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>DELIVER</span></div>
+  </div>
+</div>
+
+<!-- ── AGENTS ── -->
+<div class="wrap">
+  <p class="sec-label">The Committee</p>
+  <div class="agents-grid">
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#6366F1;box-shadow:0 0 6px #6366F1"></span>PM Lead</div>
+      <span class="agent-model">Sonnet</span>
+      <div class="agent-role">RICE, MVP scope, requirements</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#8B5CF6;box-shadow:0 0 6px #8B5CF6"></span>Market Researcher</div>
+      <span class="agent-model">Perplexity</span>
+      <div class="agent-role">TAM/SAM/SOM, competitive analysis, SWOT</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#A855F7;box-shadow:0 0 6px #A855F7"></span>UX Researcher</div>
+      <span class="agent-model">Sonnet</span>
+      <div class="agent-role">Personas, journeys, design tokens</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#EC4899;box-shadow:0 0 6px #EC4899"></span>Finance Analyst</div>
+      <span class="agent-model">Gemini</span>
+      <div class="agent-role">DCF, SaaS metrics, risk matrix, scenarios</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#D946EF;box-shadow:0 0 6px #D946EF"></span>Solutions Architect</div>
+      <span class="agent-model">Copilot</span>
+      <div class="agent-role">Feasibility, architecture, build-vs-buy TCO</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#F97316;box-shadow:0 0 6px #F97316"></span>Business Strategist</div>
+      <span class="agent-model">Gemini</span>
+      <div class="agent-role">GTM, business model, competitive moat</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#94A3B8"></span>Domain Expert</div>
+      <span class="agent-model">Configurable</span>
+      <div class="agent-role">Industry SME, regulatory, domain risks</div>
+    </div>
+    <div class="agent-card" style="border-color:rgba(217,70,239,0.25)">
+      <div class="agent-name"><span class="agent-dot" style="background:#D946EF;box-shadow:0 0 8px #D946EF;width:11px;height:11px;"></span>CEO / CTO Advisor</div>
+      <span class="agent-model" style="background:rgba(217,70,239,0.1);color:#F0ABFC;">Opus</span>
+      <div class="agent-role">Go/No-Go verdict, kill switches, roadmap</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name"><span class="agent-dot" style="background:#64748B"></span>Deliverables Writer</div>
+      <span class="agent-model">Sonnet</span>
+      <div class="agent-role">BRD, architecture, charter, risk register</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COST MANAGEMENT ── -->
+<div class="wrap">
+  <p class="sec-label">Adaptive Cost Management</p>
+  <div class="cost-section">
+    <div class="cost-label-row">
+      <span class="cost-title">Budget-Adaptive Model Routing</span>
+      <div style="display:flex;gap:8px;">
+        <span class="cost-chip cost-chip--info">60% → Opus downgrades</span>
+        <span class="cost-chip cost-chip--warn">80% → Sonnet downgrades</span>
+      </div>
+    </div>
+    <div class="cost-bar-bg">
+      <div class="cost-bar-fill"></div>
+    </div>
+    <div class="cost-markers">
+      <span>$0</span>
+      <span style="color:#6366F1">60% — Opus→Sonnet</span>
+      <span style="color:#EC4899">80% — Sonnet→Haiku</span>
+      <span>100% — Block</span>
+    </div>
+    <div style="margin-top:16px;font-size:12px;color:var(--muted);line-height:1.6">
+      CEO/CTO Advisor is always last to downgrade — stays on Opus until maximum budget pressure.
+      Token estimation: <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:5px;font-size:11px;">(bytes ÷ 4) + 500 overhead</code>
+      per agent, tracked in <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:5px;font-size:11px;">state.json</code>.
+    </div>
+  </div>
+</div>
+
+<!-- ── QUALITY MODES ── -->
+<div class="wrap">
+  <p class="sec-label">Quality Mode Presets</p>
+  <div class="modes-grid">
+    <div class="mode-card">
+      <div class="mode-badge">Quick Scout</div>
+      <div class="mode-name">Fast Filter</div>
+      <div class="mode-cost">~$0.50–$1.50</div>
+      <div class="mode-desc">PM + Architect + CEO. Light weight. Focused debate, 1 round. Perfect for early-stage filtering before you commit resources.</div>
+      <div class="mode-chips">
+        <span class="mode-chip">3 agents</span>
+        <span class="mode-chip">light mode</span>
+        <span class="mode-chip">1 debate round</span>
+        <span class="mode-chip">budget-adaptive</span>
+      </div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-badge">Product Review</div>
+      <div class="mode-name">Feature Evaluation</div>
+      <div class="mode-cost">~$2–$5</div>
+      <div class="mode-desc">5 core experts + CEO. Deep analysis. Selective debate, 2 rounds. The default mode for shipping decisions and feature prioritization.</div>
+      <div class="mode-chips">
+        <span class="mode-chip">5 agents</span>
+        <span class="mode-chip">deep mode</span>
+        <span class="mode-chip">selective debate</span>
+        <span class="mode-chip">strict validation</span>
+      </div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-badge">Investment Grade</div>
+      <div class="mode-name">Major Decisions</div>
+      <div class="mode-cost">~$8–$20</div>
+      <div class="mode-desc">All 7–8 experts. Deep analysis. Relevance-based debate, 2 rounds. Multi-provider routing. For pivots, large bets, investor-ready analysis.</div>
+      <div class="mode-chips">
+        <span class="mode-chip">all agents</span>
+        <span class="mode-chip">multi-provider</span>
+        <span class="mode-chip">relevance debate</span>
+        <span class="mode-chip">full validation</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<div class="wrap">
+  <p class="sec-label">v1.3.0 Features</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚙️</div>
+      <div>
+        <div class="feature-title">Role Controls</div>
+        <div class="feature-desc">Enable/disable agents, set weight (light/deep), model (haiku/sonnet/opus), timeout per role in config.yaml.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗣️</div>
+      <div>
+        <div class="feature-title">Selective Debate</div>
+        <div class="feature-desc">4 debate modes: all-vs-all, selective pairs, relevance-based, focused topics. Max 1–2 rounds, configurable.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📁</div>
+      <div>
+        <div class="feature-title">Output Organization</div>
+        <div class="feature-desc">Save evaluations by feature or project in organized folders: .gang/features/{name}/ or .gang/projects/{name}/.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <div>
+        <div class="feature-title">Cost Management</div>
+        <div class="feature-desc">Token estimation, budget limits, warn_at 80%, block_at 100%. Per-model rates tracked in state.json.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔀</div>
+      <div>
+        <div class="feature-title">Adaptive Model Routing</div>
+        <div class="feature-desc">Budget-adaptive downgrade (opus→sonnet→haiku) + multi-provider: Perplexity, Gemini, GitHub Copilot.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div>
+        <div class="feature-title">Evidence Ledger</div>
+        <div class="feature-desc">Codebase scan + web research populate evidence.json. Agents must cite evidence_ids for every major claim.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧩</div>
+      <div>
+        <div class="feature-title">Assumptions Ledger</div>
+        <div class="feature-desc">Agents register unstated hypotheses in assumptions.json with importance level and a validation plan.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div>
+        <div class="feature-title">Scoring Rubrics</div>
+        <div class="feature-desc">Rubric-anchored scores 1–10 with textual descriptions per level. Evidence and assumption linking required.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <div>
+        <div class="feature-title">Advisor Guardrails</div>
+        <div class="feature-desc">CEO/CTO can't issue GO without rubric-anchored scores. Auto-CONDITIONAL-GO on unvalidated assumptions.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✅</div>
+      <div>
+        <div class="feature-title">Validation Layer</div>
+        <div class="feature-desc">Schema validation, cross-reference checks, between-stage validation, CI integration via validate-gang.sh.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎛️</div>
+      <div>
+        <div class="feature-title">Quality Mode Presets</div>
+        <div class="feature-desc">Quick Scout (~$1) · Product Review (~$5) · Investment Grade (~$20). Selected at /gang init, writes full config.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COMMANDS ── -->
+<div class="wrap">
+  <p class="sec-label">Commands</p>
+  <div class="commands-grid">
+    <div class="cmd-row"><code class="cmd-code">/gang run</code><span class="cmd-desc">Run full pipeline end-to-end</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang init</code><span class="cmd-desc">Scan project, select quality mode, populate evidence</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang think</code><span class="cmd-desc">Committee setup + parallel expert analysis</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang debate</code><span class="cmd-desc">Configurable cross-review debate</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang score</code><span class="cmd-desc">Rubric-anchored plan synthesis and scoring</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang advise</code><span class="cmd-desc">CEO/CTO advisory with guardrails</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang deliver</code><span class="cmd-desc">Generate GO Package (requires GO/CONDITIONAL-GO)</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang status</code><span class="cmd-desc">Show progress, committee, cost, validation</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang config</code><span class="cmd-desc">Show or edit configuration</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang validate</code><span class="cmd-desc">Run validation checks on all artifacts</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang evaluations</code><span class="cmd-desc">List all feature and project evaluations</span></div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <p class="footer-tagline">One command. Configurable experts. Evidence-backed verdict.</p>
+  <a href="https://github.com/ebnrdwan/GangPlugin" class="footer-cta">⚡ Install Gang Plugin</a>
+  <p class="footer-version">Gang Plugin v1.3.0 · MIT License · Built for Claude Code</p>
+</footer>
 
 </body>
 </html>

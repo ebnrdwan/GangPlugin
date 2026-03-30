@@ -4,6 +4,10 @@
   <img src="https://img.shields.io/badge/agents-9_configurable-orange?style=for-the-badge" alt="Agents">
   <img src="https://img.shields.io/badge/features-11-brightgreen?style=for-the-badge" alt="Features">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
+  <br><br>
+  <a href="https://ebnrdwan.github.io/GangPlugin/">
+    <img src="https://img.shields.io/badge/⚡_Animated_Overview-View_Live-7C3AED?style=for-the-badge" alt="Animated Overview">
+  </a>
 </p>
 
 <h1 align="center">Gang</h1>
