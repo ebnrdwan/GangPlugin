@@ -155,44 +155,68 @@ Next: Run /gang debate to continue
 
 ## Quality Mode Presets
 
-| Mode | Agents | Weight | Budget | Debate | Best For |
-|------|--------|--------|--------|--------|----------|
-| **Quick Scout** | 3 (PM, Architect, CEO) | Light | ~$1 | Focused, 1 round | Early filtering |
-| **Product Review** | 5 core + CEO | Deep | ~$5 | Selective, 2 rounds | Feature evaluation |
-| **Investment Grade** | All 7+ | Deep | ~$20 | Relevance-based, 2 rounds | Major decisions |
-| **Custom** | You choose | You choose | You set | You configure | Full control |
+Selected at the start of every `/gang init`. Each preset writes a complete `config.yaml`.
+
+| Mode | Agents | Weight | Estimated Cost | Debate | Routing | Best For |
+|------|--------|--------|:--------------:|--------|---------|----------|
+| **Quick Scout** | 3 (PM, Architect, CEO) | Light | ~$0.50–$1.50 | Focused, 1 round | Budget-adaptive | Early filtering |
+| **Product Review** | 5 core + CEO | Deep | ~$2–$5 | Selective, 2 rounds | Budget-adaptive | Feature evaluation |
+| **Investment Grade** | All 7–8 | Deep | ~$8–$20 | Relevance-based, 2 rounds | Multi-provider | Major decisions |
+| **Custom** | You choose | You choose | You set | You configure | You choose | Full control |
+
+> Costs vary based on project size (larger codebases = larger evidence files = higher input tokens) and number of competitors found.
 
 ---
 
 ## Configuration
 
-All settings live in `.gang/config.yaml`. Edit between stages — changes take effect on the next stage run.
+All settings live in `.gang/config.yaml`. Edit between stages — changes take effect on the next stage run. View current settings with `/gang config`.
 
 Key configuration areas:
-- **Roles** — enable/disable agents, set weight (light/deep), model, timeout
-- **Debate** — mode (4 options), max rounds, selective pairs, focused topics
-- **Cost** — budget limit, warning/blocking thresholds, model rates
-- **Routing** — manual, budget-adaptive, or multi-provider with external APIs
-- **Evidence** — enable/disable evidence linking, web research provider, fallback chain
-- **Scoring** — rubric anchoring, evidence linking, advisor guardrails
-- **Validation** — strict/relaxed, between-stage checks, reference validation
-- **Failure Handling** — retry, fallback, partial failure degradation
+
+| Area | What It Controls |
+|------|-----------------|
+| **Roles** | Enable/disable each agent, set weight (light = 500 words / deep = 1500+), model, timeout |
+| **Debate** | Mode: `all-vs-all` / `selective` / `relevance-based` / `focused`; max rounds (1 or 2) |
+| **Cost** | Budget limit (USD), `warn_at` % (default 80%), `block_at` % (default 100%), per-model rates |
+| **Routing** | `manual` (explicit model per agent) / `budget-adaptive` (auto-downgrade at 60%/80% budget) / `multi-provider` (Perplexity, Gemini, Copilot) |
+| **Evidence** | Require citation in claims, web research provider, fallback chain (perplexity → gemini → claude) |
+| **Scoring** | Rubric anchoring required, evidence linking required, advisor guardrails (require_rubric_for_go, auto_conditional_on_unvalidated) |
+| **Validation** | Strict (block) or relaxed (warn), between-stage checks, cross-reference validation |
+| **Failure Handling** | Retry on failure, fallback to cheaper model, partial failure confidence degradation |
+
+**Budget-adaptive routing** downgrades models as budget is consumed: at 60% opus→sonnet, at 80% sonnet→haiku. The CEO/CTO Advisor is always last to downgrade — it stays on Opus until maximum budget pressure.
+
+**Multi-provider routing** sends specific agents to external providers: Market Researcher → Perplexity sonar-pro, Finance Analyst + Business Strategist → Gemini 2.5 Pro, Solutions Architect → GitHub Copilot (GPT-4o). Each has a Claude fallback on failure.
 
 ---
 
 ## Evidence & Assumptions
 
 Every claim in the evaluation is either:
-- **Evidence-backed** — cited from `evidence.json` with confidence scores
-- **Assumption-flagged** — registered in `assumptions.json` with validation plans
+- **Evidence-backed** — cited from `evidence.json` (populated during INIT from codebase scan + web research). Agents must reference `evidence_ids: [ev-001, ev-012]` for every major claim.
+- **Assumption-flagged** — registered in `assumptions.json` with an ID, importance level (critical/high/medium/low), and a validation plan stating how to test it.
 
-The CEO/CTO Advisor cannot issue unconditional GO if critical assumptions are unvalidated. This is enforced by advisor guardrails, not just guidelines.
+**Advisor guardrails enforce this at verdict time:**
+- Cannot issue GO without rubric-anchored scores on critical dimensions
+- Cannot issue GO if critical/high-importance assumptions lack validation plans
+- Auto-downgrades GO → CONDITIONAL-GO when critical assumptions are unvalidated — with explicit list of which assumptions must be validated to make the GO unconditional
+
+These are hard constraints in the CEO/CTO Advisor's prompt, not just guidelines.
 
 ---
 
 ## Full Documentation
 
-See **[gang/README.md](gang/README.md)** for complete documentation of all 11 features, configuration reference, and architecture details.
+See **[gang/README.md](gang/README.md)** for complete documentation including:
+- Detailed breakdown of all 11 v1.3.0 features with config examples
+- Token estimation formula and cost calculation examples
+- Budget-adaptive downgrade priority table and worked scenarios
+- External provider setup (Perplexity, Gemini, GitHub Copilot) with exit codes
+- Evidence and assumptions JSON schemas with field-level docs
+- Scoring rubric format (all 6 levels per dimension)
+- Validation checks reference and CI integration
+- Complete `config.yaml` reference with every setting and default
 
 ---
 
