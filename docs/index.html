@@ -446,6 +446,7 @@
       text-decoration: none; transition: opacity 0.25s, transform 0.25s;
     }
     .footer-cta:hover { opacity: 0.88; transform: translateY(-2px); }
+    .footer-docs:hover { color: var(--text) !important; border-color: rgba(255,255,255,0.25) !important; transform: translateY(-2px) !important; }
     .footer-version {
       margin-top: 24px; font-size: 12px; color: rgba(255,255,255,0.2);
     }
@@ -516,6 +517,15 @@
   <h1 class="hero__title">Gang</h1>
   <p class="hero__subtitle">Configurable Multi-Agent Business Committee for Claude Code.<br>One command. Expert analysis. Evidence-backed verdict.</p>
   <code class="hero__cmd">/gang run</code>
+  <div style="margin-top:28px;opacity:0;animation:fadeSlideUp 0.7s 0.7s cubic-bezier(0.16,1,0.3,1) forwards;">
+    <a href="deep-dive.html"
+       style="display:inline-flex;align-items:center;gap:8px;padding:9px 22px;border-radius:10px;
+              background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
+              font-size:13px;font-weight:500;color:#94A3B8;text-decoration:none;
+              transition:color 0.2s,border-color 0.2s,background 0.2s;">
+      📖 Full Documentation &amp; Deep Dive →
+    </a>
+  </div>
 </header>
 
 <!-- ── PIPELINE ── -->
@@ -848,7 +858,16 @@
 <!-- ── FOOTER ── -->
 <footer class="footer">
   <p class="footer-tagline">One command. Configurable experts. Evidence-backed verdict.</p>
-  <a href="https://github.com/ebnrdwan/GangPlugin" class="footer-cta">⚡ Install Gang Plugin</a>
+  <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+    <a href="https://github.com/ebnrdwan/GangPlugin" class="footer-cta">⚡ Install Gang Plugin</a>
+    <a href="deep-dive.html"
+       style="display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:14px;
+              background:transparent;border:1px solid rgba(255,255,255,0.12);
+              font-size:15px;font-weight:600;color:#94A3B8;text-decoration:none;
+              transition:color 0.25s,border-color 0.25s,transform 0.25s;">
+      📖 Full Documentation
+    </a>
+  </div>
   <p class="footer-version">Gang Plugin v1.3.0 · MIT License · Built for Claude Code</p>
 </footer>
 

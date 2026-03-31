@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gang Plugin — Deep Dive Documentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:    #040509;
+      --bg2:   #07080F;
+      --card:  rgba(255,255,255,0.055);
+      --border:rgba(255,255,255,0.09);
+      --text:  #F1F5F9;
+      --muted: #64748B;
+      --muted2:#94A3B8;
+      --c1: #6366F1;
+      --c2: #8B5CF6;
+      --c3: #A855F7;
+      --c4: #EC4899;
+      --c5: #D946EF;
+      --c6: #F97316;
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; scroll-behavior: smooth; }
+    body { min-height: 100vh; overflow-x: hidden; }
+
+    /* ── Keyframes ── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.90); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes cardBlink {
+      0%   { opacity: 1; } 14%  { opacity: 0; }
+      46%  { opacity: 0; } 74%  { opacity: 1; } 100% { opacity: 1; }
+    }
+    @keyframes progressFill {
+      from { width: 0; }
+      to   { width: var(--w, 100%); }
+    }
+    @keyframes termBlink {
+      0%,100% { opacity: 1; } 50% { opacity: 0; }
+    }
+
+    /* ── WebGL canvas ── */
+    #fluid-bg {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+    body::after {
+      content: ''; position: fixed; inset: 0; z-index: 2;
+      pointer-events: none; opacity: 0.028;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-repeat: repeat; background-size: 160px 160px;
+    }
+
+    /* ── Nav bar ── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 56px;
+      background: rgba(4,5,9,0.80);
+      backdrop-filter: blur(12px) saturate(140%);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 15px; font-weight: 700; color: var(--text); text-decoration: none;
+    }
+    .nav-brand-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--c1), var(--c3));
+      box-shadow: 0 0 10px rgba(99,102,241,0.6);
+    }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--muted2); text-decoration: none;
+      padding: 6px 14px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      font-size: 12px; font-weight: 500; color: var(--muted); text-decoration: none;
+      padding: 5px 12px; border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+    /* ── Layout ── */
+    .wrap { max-width: 1360px; margin: 0 auto; padding: 0 48px 80px; position: relative; z-index: 1; }
+
+    /* ── Section label ── */
+    .sec-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+    }
+    .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      padding: 112px 48px 72px;
+      text-align: center;
+    }
+    .hero__back {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted); text-decoration: none;
+      margin-bottom: 24px;
+      opacity: 0; animation: fadeIn 0.5s 0.05s forwards;
+    }
+    .hero__back:hover { color: var(--muted2); }
+    .hero__badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      background: rgba(99,102,241,0.10); border: 1px solid rgba(99,102,241,0.28);
+      font-size: 12px; font-weight: 500; color: #A5B4FC; letter-spacing: 0.3px;
+      margin-bottom: 28px;
+      opacity: 0; animation: fadeSlideUp 0.7s 0.1s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .hero__title {
+      font-size: clamp(48px, 7vw, 88px);
+      font-weight: 900; letter-spacing: -3px; line-height: 1.05;
+      background: linear-gradient(145deg, #ffffff 0%, rgba(255,255,255,0.50) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 20px;
+      opacity: 0; animation: fadeSlideUp 0.8s 0.25s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .hero__subtitle {
+      font-size: 17px; color: var(--muted2); font-weight: 400; line-height: 1.65;
+      max-width: 620px; margin: 0 auto 40px;
+      opacity: 0; animation: fadeSlideUp 0.7s 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .hero__stats {
+      display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;
+      opacity: 0; animation: fadeSlideUp 0.7s 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .hero__stat { text-align: center; }
+    .hero__stat-num {
+      font-size: 28px; font-weight: 900; letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--c1), var(--c3));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero__stat-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 0 0 64px; }
+
+    /* ── PROBLEM SECTION ── */
+    .gap-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+    }
+    .gap-card {
+      padding: 22px 20px; border-radius: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.28s, box-shadow 0.28s, transform 0.25s;
+    }
+    .gap-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(236,72,153,0.35);
+      box-shadow: 0 0 0 1px rgba(236,72,153,0.2), 0 0 20px 4px rgba(236,72,153,0.08);
+    }
+    .gap-card:nth-child(1) { animation-delay:0.7s; }
+    .gap-card:nth-child(2) { animation-delay:0.85s; }
+    .gap-card:nth-child(3) { animation-delay:1.0s; }
+    .gap-card:nth-child(4) { animation-delay:1.15s; }
+    .gap-card:nth-child(5) { animation-delay:1.3s; }
+    .gap-icon { font-size: 22px; margin-bottom: 10px; }
+    .gap-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .gap-desc  { font-size: 12px; color: var(--muted2); line-height: 1.55; }
+
+    /* ── PIPELINE ── */
+    .pipeline { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; }
+    .stage-card {
+      padding: 20px 18px 18px; border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.07); background: var(--card);
+      position: relative; overflow: hidden;
+      opacity: 0; animation: scaleIn 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: transform 0.28s ease, box-shadow 0.30s ease, border-color 0.28s ease;
+    }
+    .stage-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: 16px 16px 0 0; background: var(--stage-color, #fff); opacity: 0.7;
+    }
+    .stage-card::before {
+      content: ''; position: absolute; inset: 0; border-radius: 16px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, transparent 55%);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .stage-card:hover::before { opacity: 1; }
+    .stage-card:nth-child(1) { --stage-color:var(--c1); animation-delay:1.5s; }
+    .stage-card:nth-child(2) { --stage-color:var(--c2); animation-delay:1.7s; }
+    .stage-card:nth-child(3) { --stage-color:var(--c3); animation-delay:1.9s; }
+    .stage-card:nth-child(4) { --stage-color:var(--c4); animation-delay:2.1s; }
+    .stage-card:nth-child(5) { --stage-color:var(--c5); animation-delay:2.3s; }
+    .stage-card:nth-child(6) { --stage-color:var(--c6); animation-delay:2.5s; }
+    .stage-card:nth-child(1):hover { border-color:rgba(99,102,241,0.70);  box-shadow:0 0 0 1px rgba(99,102,241,0.50), 0 0 20px 6px rgba(99,102,241,0.18); }
+    .stage-card:nth-child(2):hover { border-color:rgba(139,92,246,0.70);  box-shadow:0 0 0 1px rgba(139,92,246,0.50), 0 0 20px 6px rgba(139,92,246,0.18); }
+    .stage-card:nth-child(3):hover { border-color:rgba(168,85,247,0.70);  box-shadow:0 0 0 1px rgba(168,85,247,0.50), 0 0 20px 6px rgba(168,85,247,0.18); }
+    .stage-card:nth-child(4):hover { border-color:rgba(236,72,153,0.70);  box-shadow:0 0 0 1px rgba(236,72,153,0.50), 0 0 20px 6px rgba(236,72,153,0.18); }
+    .stage-card:nth-child(5):hover { border-color:rgba(217,70,239,0.70);  box-shadow:0 0 0 1px rgba(217,70,239,0.50), 0 0 20px 6px rgba(217,70,239,0.18); }
+    .stage-card:nth-child(6):hover { border-color:rgba(249,115,22,0.70);  box-shadow:0 0 0 1px rgba(249,115,22,0.50), 0 0 20px 6px rgba(249,115,22,0.18); }
+    .stage-num {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+      background: var(--stage-color); margin-bottom: 14px; flex-shrink: 0; color: #fff;
+    }
+    .stage-card:nth-child(1) .stage-num { box-shadow: 0 0 14px rgba(99,102,241,0.55); }
+    .stage-card:nth-child(2) .stage-num { box-shadow: 0 0 14px rgba(139,92,246,0.55); }
+    .stage-card:nth-child(3) .stage-num { box-shadow: 0 0 14px rgba(168,85,247,0.55); }
+    @keyframes numPulse4 { 0%,100%{box-shadow:0 0 0 2px rgba(236,72,153,0.18),0 0 16px 4px rgba(236,72,153,0.55);}50%{box-shadow:0 0 0 4px rgba(236,72,153,0.32),0 0 28px 9px rgba(236,72,153,0.72);} }
+    @keyframes numPulse5 { 0%,100%{box-shadow:0 0 0 2px rgba(217,70,239,0.18),0 0 16px 4px rgba(217,70,239,0.55);}50%{box-shadow:0 0 0 4px rgba(217,70,239,0.32),0 0 28px 9px rgba(217,70,239,0.72);} }
+    @keyframes numPulse6 { 0%,100%{box-shadow:0 0 0 2px rgba(249,115,22,0.18),0 0 16px 4px rgba(249,115,22,0.55);}50%{box-shadow:0 0 0 4px rgba(249,115,22,0.32),0 0 28px 9px rgba(249,115,22,0.72);} }
+    .stage-card:nth-child(4) .stage-num { animation: numPulse4 2.8s ease-in-out infinite 0.5s; }
+    .stage-card:nth-child(5) .stage-num { animation: numPulse5 2.8s ease-in-out infinite 1.1s; }
+    .stage-card:nth-child(6) .stage-num { animation: numPulse6 2.8s ease-in-out infinite 1.7s; }
+    .stage-name { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .stage-sub  { font-size: 11px; color: var(--muted2); line-height: 1.5; margin-bottom: 14px; }
+    .stage-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      font-size: 10px; font-weight: 500; padding: 3px 8px; border-radius: 6px;
+      background: rgba(var(--tag-rgb,255,255,255), 0.10);
+      color: var(--tag-text, var(--muted2));
+    }
+    .stage-card:nth-child(1) .tag { --tag-rgb:99,102,241;  --tag-text:#A5B4FC; }
+    .stage-card:nth-child(2) .tag { --tag-rgb:139,92,246;  --tag-text:#C4B5FD; }
+    .stage-card:nth-child(3) .tag { --tag-rgb:168,85,247;  --tag-text:#D8B4FE; }
+    .stage-card:nth-child(4) .tag { --tag-rgb:236,72,153;  --tag-text:#F9A8D4; }
+    .stage-card:nth-child(5) .tag { --tag-rgb:217,70,239;  --tag-text:#F0ABFC; }
+    .stage-card:nth-child(6) .tag { --tag-rgb:249,115,22;  --tag-text:#FED7AA; }
+    /* Flow */
+    .flow-arrows { display:flex; align-items:center; margin:16px 0 0; opacity:0; animation:fadeIn 0.6s 3s forwards; }
+    .flow-step { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11px; color:var(--muted); text-align:center; }
+    .flow-dot  { width:8px; height:8px; border-radius:50%; }
+    .flow-step:nth-child(1)  .flow-dot { background:var(--c1); box-shadow:0 0 8px var(--c1); }
+    .flow-step:nth-child(3)  .flow-dot { background:var(--c2); box-shadow:0 0 8px var(--c2); }
+    .flow-step:nth-child(5)  .flow-dot { background:var(--c3); box-shadow:0 0 8px var(--c3); }
+    .flow-step:nth-child(7)  .flow-dot { background:var(--c4); box-shadow:0 0 10px var(--c4); width:11px; height:11px; }
+    .flow-step:nth-child(9)  .flow-dot { background:var(--c5); box-shadow:0 0 10px var(--c5); width:11px; height:11px; }
+    .flow-step:nth-child(11) .flow-dot { background:var(--c6); box-shadow:0 0 12px var(--c6); width:13px; height:13px; }
+    .flow-conn { width:40px; height:1px; background:linear-gradient(90deg,rgba(255,255,255,0.12),rgba(255,255,255,0.25)); position:relative; top:-11px; }
+
+    /* ── AGENTS (deep) ── */
+    .agents-deep-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 16px;
+    }
+    .agent-deep-card {
+      padding: 24px; border-radius: 16px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.28s, box-shadow 0.28s, transform 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .agent-deep-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--ac, #6366F1); border-radius: 16px 16px 0 0;
+    }
+    .agent-deep-card:hover { transform: translateY(-3px); }
+    .agent-deep-card:nth-child(1)  { animation-delay:2.8s;  --ac:#6366F1; }
+    .agent-deep-card:nth-child(2)  { animation-delay:2.95s; --ac:#0EA5E9; }
+    .agent-deep-card:nth-child(3)  { animation-delay:3.1s;  --ac:#EC4899; }
+    .agent-deep-card:nth-child(4)  { animation-delay:3.25s; --ac:#10B981; }
+    .agent-deep-card:nth-child(5)  { animation-delay:3.4s;  --ac:#F59E0B; }
+    .agent-deep-card:nth-child(6)  { animation-delay:3.55s; --ac:#8B5CF6; }
+    .agent-deep-card:nth-child(7)  { animation-delay:3.7s;  --ac:#64748B; }
+    .agent-deep-card:nth-child(8)  { animation-delay:3.85s; --ac:#F97316; border-color:rgba(249,115,22,0.22); }
+    .agent-deep-card:nth-child(9)  { animation-delay:4.0s;  --ac:#06B6D4; }
+    .agent-deep-card:nth-child(1):hover { border-color:rgba(99,102,241,0.45);   box-shadow:0 0 0 1px rgba(99,102,241,0.25),  0 0 20px 5px rgba(99,102,241,0.10); }
+    .agent-deep-card:nth-child(2):hover { border-color:rgba(14,165,233,0.45);   box-shadow:0 0 0 1px rgba(14,165,233,0.25),  0 0 20px 5px rgba(14,165,233,0.10); }
+    .agent-deep-card:nth-child(3):hover { border-color:rgba(236,72,153,0.45);   box-shadow:0 0 0 1px rgba(236,72,153,0.25),  0 0 20px 5px rgba(236,72,153,0.10); }
+    .agent-deep-card:nth-child(4):hover { border-color:rgba(16,185,129,0.45);   box-shadow:0 0 0 1px rgba(16,185,129,0.25),  0 0 20px 5px rgba(16,185,129,0.10); }
+    .agent-deep-card:nth-child(5):hover { border-color:rgba(245,158,11,0.45);   box-shadow:0 0 0 1px rgba(245,158,11,0.25),  0 0 20px 5px rgba(245,158,11,0.10); }
+    .agent-deep-card:nth-child(6):hover { border-color:rgba(139,92,246,0.45);   box-shadow:0 0 0 1px rgba(139,92,246,0.25),  0 0 20px 5px rgba(139,92,246,0.10); }
+    .agent-deep-card:nth-child(8):hover { border-color:rgba(249,115,22,0.65);   box-shadow:0 0 0 1px rgba(249,115,22,0.40),  0 0 24px 8px rgba(249,115,22,0.14); }
+    .agent-deep-card:nth-child(9):hover { border-color:rgba(6,182,212,0.45);    box-shadow:0 0 0 1px rgba(6,182,212,0.25),   0 0 20px 5px rgba(6,182,212,0.10); }
+    .agent-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .agent-icon-circle {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+      background: rgba(255,255,255,0.05); flex-shrink: 0;
+    }
+    .agent-name-block { flex: 1; }
+    .agent-name-d { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .agent-model-d {
+      display: inline-block; font-size: 10px; font-weight: 500;
+      padding: 2px 8px; border-radius: 6px;
+      background: rgba(var(--ac-rgb,99,102,241),0.15);
+      color: var(--ac, #A5B4FC);
+    }
+    .agent-tag-pill {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 6px; margin-bottom: 12px;
+      background: rgba(var(--ac-rgb,99,102,241),0.10);
+      font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+      color: var(--ac, #A5B4FC);
+    }
+    .agent-items { display: flex; flex-direction: column; gap: 6px; }
+    .agent-item { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--muted2); line-height: 1.4; }
+    .agent-item::before { content: '·'; color: var(--ac, #6366F1); font-weight: 700; flex-shrink: 0; }
+
+    /* ── QUALITY MODES ── */
+    .modes-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+    .mode-card-d {
+      padding: 28px 22px; border-radius: 18px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: scaleIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: transform 0.28s, border-color 0.28s, box-shadow 0.30s;
+      position: relative; overflow: hidden;
+    }
+    .mode-card-d::before { content:''; position:absolute; inset:0; border-radius:18px; background:linear-gradient(145deg,rgba(255,255,255,0.03) 0%,transparent 50%); }
+    .mode-card-d:nth-child(1) { animation-delay:4.2s; border-color:rgba(56,189,248,0.18); }
+    .mode-card-d:nth-child(2) { animation-delay:4.4s; border-color:rgba(129,140,248,0.22); }
+    .mode-card-d:nth-child(3) { animation-delay:4.6s; border-color:rgba(249,115,22,0.18); }
+    .mode-card-d:nth-child(4) { animation-delay:4.8s; border-color:rgba(52,211,153,0.18); }
+    .mode-card-d:nth-child(1):hover { transform:translateY(-4px); border-color:rgba(56,189,248,0.55);  box-shadow:0 0 0 1px rgba(56,189,248,0.30),  0 0 22px 6px rgba(56,189,248,0.12); }
+    .mode-card-d:nth-child(2):hover { transform:translateY(-4px); border-color:rgba(129,140,248,0.60); box-shadow:0 0 0 1px rgba(129,140,248,0.35), 0 0 22px 6px rgba(129,140,248,0.14); }
+    .mode-card-d:nth-child(3):hover { transform:translateY(-4px); border-color:rgba(249,115,22,0.55);  box-shadow:0 0 0 1px rgba(249,115,22,0.30),  0 0 22px 6px rgba(249,115,22,0.12); }
+    .mode-card-d:nth-child(4):hover { transform:translateY(-4px); border-color:rgba(52,211,153,0.50);  box-shadow:0 0 0 1px rgba(52,211,153,0.28),  0 0 22px 6px rgba(52,211,153,0.10); }
+    .mode-badge-d {
+      display: inline-flex; align-items: center; gap: 6px;
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      font-size: 22px; justify-content: center; margin-bottom: 16px;
+    }
+    .mode-name-d { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .mode-cost-d {
+      font-size: 26px; font-weight: 900; letter-spacing: -1px; margin: 8px 0 10px;
+    }
+    .mode-card-d:nth-child(1) .mode-cost-d { color: #38BDF8; }
+    .mode-card-d:nth-child(2) .mode-cost-d { color: #818CF8; }
+    .mode-card-d:nth-child(3) .mode-cost-d { color: #FB923C; }
+    .mode-card-d:nth-child(4) .mode-cost-d { color: #34D399; }
+    .mode-desc-d { font-size: 12px; color: var(--muted2); line-height: 1.6; margin-bottom: 16px; }
+    .mode-specs { display: flex; flex-direction: column; gap: 7px; }
+    .mode-spec-row { display: flex; flex-direction: column; gap: 2px; }
+    .mode-spec-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .mode-spec-val   { font-size: 11px; color: var(--muted2); }
+    .mode-featured-badge {
+      margin-top: 16px; display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 8px;
+      background: rgba(129,140,248,0.18); font-size: 11px; font-weight: 500; color: #A5B4FC;
+    }
+
+    /* ── EVIDENCE ── */
+    .evidence-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .ev-card {
+      padding: 28px; border-radius: 16px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .ev-card:nth-child(1) { animation-delay:4.9s; border-color:rgba(16,185,129,0.25); }
+    .ev-card:nth-child(2) { animation-delay:5.1s; border-color:rgba(245,158,11,0.25); }
+    .ev-card:hover { transform: translateY(-2px); }
+    .ev-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .ev-desc  { font-size: 13px; color: var(--muted2); line-height: 1.6; margin-bottom: 16px; }
+    .ev-source {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px; border-radius: 10px; margin-bottom: 12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .ev-source-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .ev-source-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .ev-source-desc  { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .ev-guardrails { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+    .ev-guardrail { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--muted2); line-height: 1.4; }
+    .ev-guardrail::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #F59E0B; flex-shrink: 0; position: relative; top: -1px; }
+    .code-box {
+      padding: 14px 16px; border-radius: 10px; background: rgba(0,0,0,0.45);
+      font-family: 'Fira Code', monospace; font-size: 11px; line-height: 1.7;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .code-box--green { color: #34D399; }
+    .code-box--amber { color: #FCD34D; }
+
+    /* ── RUBRIC ── */
+    .rubric-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .rubric-card {
+      padding: 22px; border-radius: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.28s, box-shadow 0.28s, transform 0.25s;
+    }
+    .rubric-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
+    .rubric-card:nth-child(1) { animation-delay:5.2s; } .rubric-card:nth-child(2) { animation-delay:5.35s; }
+    .rubric-card:nth-child(3) { animation-delay:5.5s; } .rubric-card:nth-child(4) { animation-delay:5.65s; }
+    .rubric-card:nth-child(5) { animation-delay:5.8s; } .rubric-card:nth-child(6) { animation-delay:5.95s; }
+    .rubric-accent { width: 36px; height: 3px; border-radius: 2px; margin-bottom: 14px; }
+    .rubric-name  { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+    .rubric-levels { display: flex; flex-direction: column; gap: 7px; }
+    .rubric-level { display: flex; align-items: baseline; gap: 8px; }
+    .rubric-score {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 18px; border-radius: 4px; font-size: 10px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .rubric-text { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .score-low  { background: rgba(239,68,68,0.20); color: #FCA5A5; }
+    .score-mid  { background: rgba(245,158,11,0.20); color: #FCD34D; }
+    .score-good { background: rgba(56,189,248,0.20); color: #7DD3FC; }
+    .score-high { background: rgba(52,211,153,0.20); color: #6EE7B7; }
+
+    /* ── 11 FEATURES ── */
+    .features-grid-d {
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); gap: 12px;
+    }
+    .feature-card-d {
+      padding: 20px; border-radius: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.28s, box-shadow 0.28s, transform 0.25s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card-d:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0,206,209,0.40);
+      box-shadow: 0 0 0 1px rgba(0,206,209,0.22), 0 0 16px 4px rgba(0,206,209,0.10);
+    }
+    .feature-card-d:nth-child(1)  { animation-delay:6.1s; }  .feature-card-d:nth-child(2)  { animation-delay:6.2s; }
+    .feature-card-d:nth-child(3)  { animation-delay:6.3s; }  .feature-card-d:nth-child(4)  { animation-delay:6.4s; }
+    .feature-card-d:nth-child(5)  { animation-delay:6.5s; }  .feature-card-d:nth-child(6)  { animation-delay:6.6s; }
+    .feature-card-d:nth-child(7)  { animation-delay:6.7s; }  .feature-card-d:nth-child(8)  { animation-delay:6.8s; }
+    .feature-card-d:nth-child(9)  { animation-delay:6.9s; }  .feature-card-d:nth-child(10) { animation-delay:7.0s; }
+    .feature-card-d:nth-child(11) { animation-delay:7.1s; }
+    .feat-num {
+      font-size: 28px; font-weight: 900; opacity: 0.18; line-height: 1;
+      margin-bottom: 4px;
+    }
+    .feat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .feat-icon { font-size: 20px; }
+    .feat-title { font-size: 14px; font-weight: 700; }
+    .feat-desc  { font-size: 12px; color: var(--muted2); line-height: 1.55; }
+    .feat-accent { height: 2px; border-radius: 1px; margin-top: 14px; opacity: 0.5; }
+
+    /* ── COMMANDS ── */
+    .commands-grid-d {
+      display: grid; grid-template-columns: repeat(auto-fill,minmax(420px,1fr)); gap: 10px;
+    }
+    .cmd-row-d {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 18px; border-radius: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      opacity: 0; animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+      transition: border-color 0.28s, box-shadow 0.28s;
+    }
+    .cmd-row-d:hover {
+      border-color: rgba(0,206,209,0.38);
+      box-shadow: 0 0 0 1px rgba(0,206,209,0.22), 0 0 12px 3px rgba(0,206,209,0.10);
+    }
+    .cmd-row-d:nth-child(1)  { animation-delay:7.2s; } .cmd-row-d:nth-child(2)  { animation-delay:7.3s; }
+    .cmd-row-d:nth-child(3)  { animation-delay:7.4s; } .cmd-row-d:nth-child(4)  { animation-delay:7.5s; }
+    .cmd-row-d:nth-child(5)  { animation-delay:7.6s; } .cmd-row-d:nth-child(6)  { animation-delay:7.7s; }
+    .cmd-row-d:nth-child(7)  { animation-delay:7.8s; } .cmd-row-d:nth-child(8)  { animation-delay:7.9s; }
+    .cmd-row-d:nth-child(9)  { animation-delay:8.0s; } .cmd-row-d:nth-child(10) { animation-delay:8.1s; }
+    .cmd-row-d:nth-child(11) { animation-delay:8.2s; } .cmd-row-d:nth-child(12) { animation-delay:8.3s; }
+    .cmd-tag {
+      padding: 5px 12px; border-radius: 7px; white-space: nowrap;
+      font-family: 'Fira Code', monospace; font-size: 12px; font-weight: 500;
+      background: rgba(99,102,241,0.14); color: #A5B4FC;
+      flex-shrink: 0;
+    }
+    .cmd-desc-d { font-size: 12px; color: var(--muted2); line-height: 1.45; }
+
+    /* ── TERMINAL ── */
+    .terminal-block {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
+    }
+    .terminal-info { }
+    .terminal-info-title { font-size: 36px; font-weight: 900; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 16px; }
+    .terminal-info-desc  { font-size: 15px; color: var(--muted2); line-height: 1.65; margin-bottom: 24px; }
+    .terminal-bullets { display: flex; flex-direction: column; gap: 10px; }
+    .terminal-bullet { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted2); }
+    .terminal-bullet::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--c1); flex-shrink: 0; }
+    .terminal-window {
+      border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      opacity: 0; animation: fadeSlideUp 0.7s 8.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .terminal-titlebar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 16px; height: 40px; background: #0D1520;
+    }
+    .tl-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .tl-title { font-size: 12px; color: var(--muted); margin-left: 4px; font-family: 'Fira Code', monospace; }
+    .terminal-body {
+      background: #020509; padding: 20px 24px;
+      font-family: 'Fira Code', monospace; font-size: 11.5px; line-height: 1.85;
+    }
+    .tl { display: block; white-space: pre; }
+    .tl-head   { color: #F1F5F9; font-weight: 600; }
+    .tl-div    { color: #1E2D3F; }
+    .tl-dim    { color: #475569; }
+    .tl-on     { color: #34D399; }
+    .tl-off    { color: #334155; }
+    .tl-warn   { color: #FCD34D; }
+    .tl-cost   { color: #F59E0B; }
+    .tl-next   { color: #818CF8; font-weight: 600; }
+    .tl-muted  { color: #94A3B8; }
+    .tl-blank  { color: transparent; user-select: none; }
+    .cursor { display:inline-block; width:7px; height:13px; background:#818CF8; vertical-align:middle; animation:termBlink 1s infinite; margin-left:2px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center; padding: 64px 48px 80px;
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      opacity: 0; animation: fadeIn 0.8s 9s forwards;
+    }
+    .footer-tagline { font-size: 15px; color: var(--muted); margin-bottom: 24px; }
+    .footer-ctas { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+    .footer-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 32px; border-radius: 13px;
+      background: linear-gradient(135deg, var(--c1), var(--c3));
+      font-size: 14px; font-weight: 600; color: #fff; text-decoration: none;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .footer-cta:hover { opacity: 0.88; transform: translateY(-2px); }
+    .footer-cta--ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted2);
+    }
+    .footer-cta--ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+    .footer-version { font-size: 12px; color: rgba(255,255,255,0.18); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+
+    /* ── Post-entrance lock ── */
+    .anim-done { animation: none !important; opacity: 1 !important; transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.30s ease !important; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .pipeline { grid-template-columns: repeat(3,1fr); }
+      .agents-deep-grid { grid-template-columns: repeat(2,1fr); }
+      .modes-grid-4 { grid-template-columns: repeat(2,1fr); }
+      .rubric-grid { grid-template-columns: repeat(2,1fr); }
+      .terminal-block { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .pipeline { grid-template-columns: repeat(2,1fr); }
+      .evidence-row { grid-template-columns: 1fr; }
+      .agents-deep-grid { grid-template-columns: 1fr; }
+      .modes-grid-4 { grid-template-columns: 1fr; }
+      .rubric-grid { grid-template-columns: 1fr; }
+      .commands-grid-d { grid-template-columns: 1fr; }
+      .wrap { padding: 0 20px 60px; }
+      .nav { padding: 0 20px; }
+      .hero { padding: 96px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="fluid-bg" aria-hidden="true"></canvas>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-brand-dot"></div>
+    Gang Plugin
+  </a>
+  <div class="nav-links">
+    <a href="#pipeline"  class="nav-link">Pipeline</a>
+    <a href="#committee" class="nav-link">Committee</a>
+    <a href="#modes"     class="nav-link">Modes</a>
+    <a href="#evidence"  class="nav-link">Evidence</a>
+    <a href="#scoring"   class="nav-link">Scoring</a>
+    <a href="#features"  class="nav-link">Features</a>
+    <a href="#commands"  class="nav-link">Commands</a>
+  </div>
+  <a href="index.html" class="nav-back">← Overview</a>
+</nav>
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="hero__badge">📖 Deep Dive &nbsp;·&nbsp; Full Documentation &nbsp;·&nbsp; v1.3.0</div>
+  <h1 class="hero__title">Gang Deep Dive</h1>
+  <p class="hero__subtitle">
+    Complete technical reference — every agent, every stage, every configuration option.<br>
+    Evidence-backed analysis. Rubric-anchored verdicts. Full audit trail.
+  </p>
+  <div class="hero__stats">
+    <div class="hero__stat"><div class="hero__stat-num">9</div><div class="hero__stat-label">Agents</div></div>
+    <div class="hero__stat"><div class="hero__stat-num">6</div><div class="hero__stat-label">Stages</div></div>
+    <div class="hero__stat"><div class="hero__stat-num">11</div><div class="hero__stat-label">Config Features</div></div>
+    <div class="hero__stat"><div class="hero__stat-num">4</div><div class="hero__stat-label">Quality Modes</div></div>
+    <div class="hero__stat"><div class="hero__stat-num">~$1</div><div class="hero__stat-label">Starting Cost</div></div>
+  </div>
+</header>
+
+<!-- ── PIPELINE ── -->
+<div class="wrap" id="pipeline">
+  <div class="divider"></div>
+  <p class="sec-label">6-Stage Pipeline</p>
+
+  <div class="pipeline">
+    <div class="stage-card">
+      <div class="stage-num">1</div>
+      <div class="stage-name">INIT</div>
+      <div class="stage-sub">Scan + Evidence Population</div>
+      <div class="stage-tags">
+        <span class="tag">Codebase Scan</span>
+        <span class="tag">evidence.json</span>
+        <span class="tag">Quality Mode</span>
+        <span class="tag">Score Rubric</span>
+        <span class="tag">Web Research</span>
+      </div>
+    </div>
+    <div class="stage-card">
+      <div class="stage-num">2</div>
+      <div class="stage-name">THINK</div>
+      <div class="stage-sub">Committee + Parallel Experts</div>
+      <div class="stage-tags">
+        <span class="tag">9 Agents</span>
+        <span class="tag">Evidence Protocol</span>
+        <span class="tag">Assumptions</span>
+        <span class="tag">Light / Deep</span>
+      </div>
+    </div>
+    <div class="stage-card">
+      <div class="stage-num">3</div>
+      <div class="stage-name">DEBATE</div>
+      <div class="stage-sub">Cross-Review · 4 Modes</div>
+      <div class="stage-tags">
+        <span class="tag">all-vs-all</span>
+        <span class="tag">selective</span>
+        <span class="tag">relevance</span>
+        <span class="tag">focused</span>
+        <span class="tag">1–2 rounds</span>
+      </div>
+    </div>
+    <div class="stage-card">
+      <div class="stage-num">4</div>
+      <div class="stage-name">SCORE</div>
+      <div class="stage-sub">Rubric-Anchored Synthesis</div>
+      <div class="stage-tags">
+        <span class="tag">Rubric 1–10</span>
+        <span class="tag">Evidence IDs</span>
+        <span class="tag">Weighted Avg</span>
+        <span class="tag">Confidence</span>
+      </div>
+    </div>
+    <div class="stage-card">
+      <div class="stage-num">5</div>
+      <div class="stage-name">ADVISE</div>
+      <div class="stage-sub">CEO/CTO · Guardrails</div>
+      <div class="stage-tags">
+        <span class="tag">GO</span>
+        <span class="tag">CONDITIONAL-GO</span>
+        <span class="tag">NO-GO</span>
+        <span class="tag">Opus Model</span>
+      </div>
+    </div>
+    <div class="stage-card">
+      <div class="stage-num">6</div>
+      <div class="stage-name">DELIVER</div>
+      <div class="stage-sub">GO Package Output</div>
+      <div class="stage-tags">
+        <span class="tag">BRD</span>
+        <span class="tag">Architecture</span>
+        <span class="tag">Charter</span>
+        <span class="tag">Risk Register</span>
+        <span class="tag">API Contracts</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrows" style="margin-top:16px;">
+    <div class="flow-step"><div class="flow-dot"></div><span>INIT</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>THINK</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>DEBATE</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>SCORE</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>ADVISE</span></div>
+    <div class="flow-conn"></div>
+    <div class="flow-step"><div class="flow-dot"></div><span>DELIVER</span></div>
+  </div>
+</div>
+
+<!-- ── COMMITTEE ── -->
+<div class="wrap" id="committee">
+  <div class="divider"></div>
+  <p class="sec-label">The Committee — 9 Specialized Agents</p>
+
+  <div class="agents-deep-grid">
+    <!-- PM Lead -->
+    <div class="agent-deep-card" style="--ac:#6366F1;--ac-rgb:99,102,241;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">📋</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">PM Lead</div>
+          <span class="agent-model-d">Sonnet</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:99,102,241;">RICE · MVP · REQUIREMENTS</div>
+      <div class="agent-items">
+        <div class="agent-item">RICE prioritization framework</div>
+        <div class="agent-item">MVP scope boundaries</div>
+        <div class="agent-item">Requirements gathering + user story mapping</div>
+        <div class="agent-item">Feature dependency analysis</div>
+      </div>
+    </div>
+    <!-- Market Researcher -->
+    <div class="agent-deep-card" style="--ac:#0EA5E9;--ac-rgb:14,165,233;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">📊</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">Market Researcher</div>
+          <span class="agent-model-d">Perplexity Sonar Pro</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:14,165,233;">TAM · SAM · SOM · SWOT</div>
+      <div class="agent-items">
+        <div class="agent-item">TAM/SAM/SOM sizing with web research</div>
+        <div class="agent-item">12-dimension competitor scoring matrix</div>
+        <div class="agent-item">Trend analysis + SWOT</div>
+        <div class="agent-item">Battle cards + positioning maps</div>
+      </div>
+    </div>
+    <!-- UX Researcher -->
+    <div class="agent-deep-card" style="--ac:#EC4899;--ac-rgb:236,72,153;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">🎨</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">UX Researcher</div>
+          <span class="agent-model-d">Sonnet</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:236,72,153;">PERSONAS · JOURNEYS · STITCH</div>
+      <div class="agent-items">
+        <div class="agent-item">User personas + JTBD analysis</div>
+        <div class="agent-item">Journey maps + information architecture</div>
+        <div class="agent-item">Design tokens + wireframes</div>
+        <div class="agent-item">Google Stitch-ready UI generation specs</div>
+      </div>
+    </div>
+    <!-- Finance & Risk -->
+    <div class="agent-deep-card" style="--ac:#10B981;--ac-rgb:16,185,129;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">💰</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">Finance &amp; Risk Analyst</div>
+          <span class="agent-model-d">Gemini 2.5 Pro</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:16,185,129;">DCF · SCENARIOS · RISK</div>
+      <div class="agent-items">
+        <div class="agent-item">DCF valuation model</div>
+        <div class="agent-item">SaaS metrics benchmarking (ARR, MRR, LTV)</div>
+        <div class="agent-item">Base / bull / bear / stress scenarios</div>
+        <div class="agent-item">Risk matrix assessment</div>
+      </div>
+    </div>
+    <!-- Solutions Architect -->
+    <div class="agent-deep-card" style="--ac:#F59E0B;--ac-rgb:245,158,11;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">⚙️</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">Solutions Architect</div>
+          <span class="agent-model-d">Sonnet / Copilot</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:245,158,11;">TECH · BUILD-VS-BUY · TCO</div>
+      <div class="agent-items">
+        <div class="agent-item">Technical feasibility analysis</div>
+        <div class="agent-item">Architecture design + C4 diagrams</div>
+        <div class="agent-item">Build-vs-buy TCO analysis</div>
+        <div class="agent-item">DORA metrics + ADR drafting</div>
+      </div>
+    </div>
+    <!-- Business Strategist -->
+    <div class="agent-deep-card" style="--ac:#8B5CF6;--ac-rgb:139,92,246;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">🎯</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">Business Strategist</div>
+          <span class="agent-model-d">Gemini 2.5 Pro</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:139,92,246;">GTM · MOAT · PRICING</div>
+      <div class="agent-items">
+        <div class="agent-item">Go-to-market strategy</div>
+        <div class="agent-item">Business model canvas</div>
+        <div class="agent-item">Competitive moat assessment</div>
+        <div class="agent-item">Pricing strategy design</div>
+      </div>
+    </div>
+    <!-- Domain Expert (optional) -->
+    <div class="agent-deep-card" style="--ac:#64748B;--ac-rgb:100,116,139;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">🔬</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">Domain Expert <span style="font-size:10px;opacity:0.5;font-weight:500;">· Optional</span></div>
+          <span class="agent-model-d" style="--ac:#94A3B8;">Configurable</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:100,116,139;">OPTIONAL · INDUSTRY SME</div>
+      <div class="agent-items">
+        <div class="agent-item">Industry-specific validation</div>
+        <div class="agent-item">Regulatory constraint mapping</div>
+        <div class="agent-item">Domain blind-spot detection</div>
+        <div class="agent-item">Benchmark verification</div>
+      </div>
+    </div>
+    <!-- CEO/CTO Advisor -->
+    <div class="agent-deep-card" style="--ac:#F97316;--ac-rgb:249,115,22;border-color:rgba(249,115,22,0.25);">
+      <div class="agent-header">
+        <div class="agent-icon-circle">👑</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">CEO / CTO Advisor</div>
+          <span class="agent-model-d" style="--ac:#FB923C;--ac-rgb:251,146,60;">Opus — Always</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:249,115,22;">GO / NO-GO · GUARDRAILED</div>
+      <div class="agent-items">
+        <div class="agent-item">Rubric-anchored verdict (GO / CONDITIONAL-GO / NO-GO)</div>
+        <div class="agent-item">Kill switches + downside scenarios</div>
+        <div class="agent-item">Auto-CONDITIONAL on unvalidated assumptions</div>
+        <div class="agent-item">Implementation roadmap</div>
+      </div>
+    </div>
+    <!-- Deliverables Writer -->
+    <div class="agent-deep-card" style="--ac:#06B6D4;--ac-rgb:6,182,212;">
+      <div class="agent-header">
+        <div class="agent-icon-circle">📄</div>
+        <div class="agent-name-block">
+          <div class="agent-name-d">Deliverables Writer</div>
+          <span class="agent-model-d">Sonnet</span>
+        </div>
+      </div>
+      <div class="agent-tag-pill" style="--ac-rgb:6,182,212;">BRD · CHARTER · CONTRACTS</div>
+      <div class="agent-items">
+        <div class="agent-item">Business Requirements Document (BRD)</div>
+        <div class="agent-item">Technical architecture document</div>
+        <div class="agent-item">Project charter + risk register</div>
+        <div class="agent-item">Data model + API contracts</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── QUALITY MODES ── -->
+<div class="wrap" id="modes">
+  <div class="divider"></div>
+  <p class="sec-label">Quality Mode Presets</p>
+
+  <div class="modes-grid-4">
+    <div class="mode-card-d">
+      <div class="mode-badge-d">⚡</div>
+      <div class="mode-name-d">Quick Scout</div>
+      <div class="mode-cost-d" data-final="~$0.50–$1.50">~$0.50–$1.50</div>
+      <div class="mode-desc-d">Fast directional signal. PM + Architect + CEO only. Focused debate, 1 round. Perfect for early-stage filtering.</div>
+      <div class="mode-specs">
+        <div class="mode-spec-row"><span class="mode-spec-label">Agents</span><span class="mode-spec-val">PM, Architect, CEO</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Debate</span><span class="mode-spec-val">Focused · 1 round</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Routing</span><span class="mode-spec-val">Budget-adaptive</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Best for</span><span class="mode-spec-val">Early filtering</span></div>
+      </div>
+    </div>
+    <div class="mode-card-d">
+      <div class="mode-badge-d">🔍</div>
+      <div class="mode-name-d">Product Review</div>
+      <div class="mode-cost-d" data-final="~$2–$5">~$2–$5</div>
+      <div class="mode-desc-d">Balanced depth. 5 core experts + CEO. Selective debate, 2 rounds. The default for feature evaluation decisions.</div>
+      <div class="mode-specs">
+        <div class="mode-spec-row"><span class="mode-spec-label">Agents</span><span class="mode-spec-val">5 core + CEO</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Debate</span><span class="mode-spec-val">Selective · 2 rounds</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Routing</span><span class="mode-spec-val">Budget-adaptive</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Best for</span><span class="mode-spec-val">Feature evaluation</span></div>
+      </div>
+      <div class="mode-featured-badge">★ Default recommended</div>
+    </div>
+    <div class="mode-card-d">
+      <div class="mode-badge-d">🏆</div>
+      <div class="mode-name-d">Investment Grade</div>
+      <div class="mode-cost-d" data-final="~$8–$20">~$8–$20</div>
+      <div class="mode-desc-d">Full committee. All 7–8 agents. External providers. Relevance-based debate. Rubric-anchored. For major decisions.</div>
+      <div class="mode-specs">
+        <div class="mode-spec-row"><span class="mode-spec-label">Agents</span><span class="mode-spec-val">All 7–8 agents</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Debate</span><span class="mode-spec-val">Relevance-based · 2 rounds</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Routing</span><span class="mode-spec-val">Multi-provider</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Best for</span><span class="mode-spec-val">Major decisions, pivots</span></div>
+      </div>
+    </div>
+    <div class="mode-card-d">
+      <div class="mode-badge-d">🔧</div>
+      <div class="mode-name-d">Custom</div>
+      <div class="mode-cost-d" data-final="You set it">You set it</div>
+      <div class="mode-desc-d">Full control over every setting. Choose agents, weight, model, debate mode, budget limit, and all routing options.</div>
+      <div class="mode-specs">
+        <div class="mode-spec-row"><span class="mode-spec-label">Agents</span><span class="mode-spec-val">You choose</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Debate</span><span class="mode-spec-val">You configure</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Routing</span><span class="mode-spec-val">You choose</span></div>
+        <div class="mode-spec-row"><span class="mode-spec-label">Best for</span><span class="mode-spec-val">Full control</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EVIDENCE & ASSUMPTIONS ── -->
+<div class="wrap" id="evidence">
+  <div class="divider"></div>
+  <p class="sec-label">Evidence &amp; Assumptions Ledger</p>
+
+  <div class="evidence-row">
+    <div class="ev-card">
+      <div class="ev-title" style="color:#34D399;">📂 evidence.json</div>
+      <div class="ev-desc">Populated during INIT from two sources. Agents must cite <code style="background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;font-size:11px;">evidence_ids</code> for every major claim. Never present assumptions as facts.</div>
+      <div class="ev-source">
+        <div class="ev-source-icon">💻</div>
+        <div>
+          <div class="ev-source-title">Codebase Scan</div>
+          <div class="ev-source-desc">Tech stack, architecture, file structure, features — always available regardless of web research settings.</div>
+        </div>
+      </div>
+      <div class="ev-source">
+        <div class="ev-source-icon">🌐</div>
+        <div>
+          <div class="ev-source-title">Web Research</div>
+          <div class="ev-source-desc">Competitor data via Perplexity sonar-pro → Gemini 2.5 → Claude WebSearch fallback chain.</div>
+        </div>
+      </div>
+      <div class="code-box code-box--green">{ "id": "ev-001",
+  "source": "codebase-scan",
+  "type": "tech-stack",
+  "text": "Next.js 15.2, TypeScript 5.7",
+  "confidence": 0.95 }</div>
+    </div>
+
+    <div class="ev-card">
+      <div class="ev-title" style="color:#FCD34D;">📋 assumptions.json</div>
+      <div class="ev-desc">Agents register unstated hypotheses across all stages. Advisor guardrails enforce validation plans before issuing any GO verdict.</div>
+      <div class="ev-guardrails">
+        <div class="ev-guardrail">Cannot issue GO without rubric-anchored scores on critical dimensions</div>
+        <div class="ev-guardrail">Cannot issue GO if critical/high assumptions lack validation plans</div>
+        <div class="ev-guardrail">Auto-downgrades GO → CONDITIONAL-GO when assumptions are unvalidated</div>
+        <div class="ev-guardrail">CEO/CTO lists exactly which assumptions must be validated for unconditional GO</div>
+      </div>
+      <div class="code-box code-box--amber">{ "id": "as-001",
+  "text": "Target users are daily retail traders",
+  "importance": "high",
+  "validated": false,
+  "validation_plan": "Run 10 user interviews" }</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCORING RUBRIC ── -->
+<div class="wrap" id="scoring">
+  <div class="divider"></div>
+  <p class="sec-label">Rubric-Anchored Scoring — 6 Dimensions</p>
+
+  <div class="rubric-grid">
+    <div class="rubric-card">
+      <div class="rubric-accent" style="background:#6366F1;"></div>
+      <div class="rubric-name">Market Viability</div>
+      <div class="rubric-levels">
+        <div class="rubric-level"><span class="rubric-score score-low">1</span><span class="rubric-text">No identifiable market. Pure speculation.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-low">3</span><span class="rubric-text">Small market, unclear demand signals, weak evidence.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-mid">5</span><span class="rubric-text">Market exists but size uncertain. Some evidence of demand.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-good">7</span><span class="rubric-text">Clear market with evidence. Known competitors validate demand.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">9</span><span class="rubric-text">Large, growing market with strong demand signals and evidence.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">10</span><span class="rubric-text">Proven market with direct user validation data.</span></div>
+      </div>
+    </div>
+    <div class="rubric-card">
+      <div class="rubric-accent" style="background:#0EA5E9;"></div>
+      <div class="rubric-name">Technical Feasibility</div>
+      <div class="rubric-levels">
+        <div class="rubric-level"><span class="rubric-score score-low">1</span><span class="rubric-text">Impossible with current stack. Requires fundamental pivot.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-low">3</span><span class="rubric-text">Major unknowns, unproven stack, high integration risk.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-mid">5</span><span class="rubric-text">Feasible but with significant refactors and dependencies.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-good">7</span><span class="rubric-text">Feasible with known trade-offs, no blocking unknowns.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">9</span><span class="rubric-text">Mostly implemented or trivially achievable.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">10</span><span class="rubric-text">Already built. Just needs wiring.</span></div>
+      </div>
+    </div>
+    <div class="rubric-card">
+      <div class="rubric-accent" style="background:#10B981;"></div>
+      <div class="rubric-name">Business Model</div>
+      <div class="rubric-levels">
+        <div class="rubric-level"><span class="rubric-score score-low">1</span><span class="rubric-text">No monetization path identified.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-low">3</span><span class="rubric-text">Speculative model, no comparable validation.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-mid">5</span><span class="rubric-text">Comparable model exists in adjacent space.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-good">7</span><span class="rubric-text">Validated pricing model exists in the market.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">9</span><span class="rubric-text">Proven in adjacent market with strong evidence.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">10</span><span class="rubric-text">Validated with real paying users in this market.</span></div>
+      </div>
+    </div>
+    <div class="rubric-card">
+      <div class="rubric-accent" style="background:#F59E0B;"></div>
+      <div class="rubric-name">Execution Risk</div>
+      <div class="rubric-levels">
+        <div class="rubric-level"><span class="rubric-score score-low">1</span><span class="rubric-text">Team clearly cannot deliver this.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-low">3</span><span class="rubric-text">Critical skill gaps with no clear plan.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-mid">5</span><span class="rubric-text">Manageable gaps with mitigations possible.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-good">7</span><span class="rubric-text">Minor skill gaps, clear mitigation plan exists.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">9</span><span class="rubric-text">Team well-suited, minimal gaps.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">10</span><span class="rubric-text">Team has delivered this exact thing before.</span></div>
+      </div>
+    </div>
+    <div class="rubric-card">
+      <div class="rubric-accent" style="background:#EC4899;"></div>
+      <div class="rubric-name">Strategic Fit</div>
+      <div class="rubric-levels">
+        <div class="rubric-level"><span class="rubric-score score-low">1</span><span class="rubric-text">Directly contradicts stated strategy.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-low">3</span><span class="rubric-text">Tangential to strategy, low leverage.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-mid">5</span><span class="rubric-text">Adjacent to core focus, moderate fit.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-good">7</span><span class="rubric-text">Aligns with stated product roadmap.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">9</span><span class="rubric-text">Directly advances stated strategic goals.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">10</span><span class="rubric-text">Core strategic bet, highest leverage.</span></div>
+      </div>
+    </div>
+    <div class="rubric-card">
+      <div class="rubric-accent" style="background:#F97316;"></div>
+      <div class="rubric-name">ROI Potential</div>
+      <div class="rubric-levels">
+        <div class="rubric-level"><span class="rubric-score score-low">1</span><span class="rubric-text">Negative ROI likely in most scenarios.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-low">3</span><span class="rubric-text">Marginal return, hard to justify.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-mid">5</span><span class="rubric-text">Positive ROI if optimistic assumptions hold.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-good">7</span><span class="rubric-text">Solid ROI plausible with evidence support.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">9</span><span class="rubric-text">Strong ROI with evidence from comparable deals.</span></div>
+        <div class="rubric-level"><span class="rubric-score score-high">10</span><span class="rubric-text">Exceptional ROI validated with real data.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 11 FEATURES ── -->
+<div class="wrap" id="features">
+  <div class="divider"></div>
+  <p class="sec-label">v1.3.0 — 11 Configuration Features</p>
+
+  <div class="features-grid-d">
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#6366F1;">01</div>
+      <div class="feat-header"><span class="feat-icon">🎛️</span><span class="feat-title">Role Controls</span></div>
+      <div class="feat-desc">Enable/disable agents, set weight (light=500w / deep=1500+w), model (haiku/sonnet/opus), timeout per role in config.yaml.</div>
+      <div class="feat-accent" style="background:#6366F1;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#EC4899;">02</div>
+      <div class="feat-header"><span class="feat-icon">⚔️</span><span class="feat-title">Selective Debate</span></div>
+      <div class="feat-desc">4 modes: all-vs-all, selective pairs, relevance-based, focused topics. Configurable 1–2 rounds. Round 2 always all-vs-all for revisions.</div>
+      <div class="feat-accent" style="background:#EC4899;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#0EA5E9;">03</div>
+      <div class="feat-header"><span class="feat-icon">📁</span><span class="feat-title">Output Organization</span></div>
+      <div class="feat-desc">Save evaluations by feature (.gang/features/{name}/) or project (.gang/projects/{name}/). /gang evaluations lists all sessions.</div>
+      <div class="feat-accent" style="background:#0EA5E9;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#F59E0B;">04</div>
+      <div class="feat-header"><span class="feat-icon">💸</span><span class="feat-title">Cost Management</span></div>
+      <div class="feat-desc">Token estimation (bytes÷4 + 500 overhead), budget limits in USD, warn_at%, block_at%. Per-model rates tracked per agent in state.json.</div>
+      <div class="feat-accent" style="background:#F59E0B;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#10B981;">05</div>
+      <div class="feat-header"><span class="feat-icon">🔀</span><span class="feat-title">Adaptive Model Routing</span></div>
+      <div class="feat-desc">Budget-adaptive: opus→sonnet at 60%, sonnet→haiku at 80%. CEO/CTO last to downgrade. Multi-provider: Perplexity, Gemini, GitHub Copilot.</div>
+      <div class="feat-accent" style="background:#10B981;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#34D399;">06</div>
+      <div class="feat-header"><span class="feat-icon">📂</span><span class="feat-title">Evidence Ledger</span></div>
+      <div class="feat-desc">Codebase scan + web research populate evidence.json during INIT. Agents must reference evidence_ids for every major claim. No assumptions as facts.</div>
+      <div class="feat-accent" style="background:#34D399;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#FCD34D;">07</div>
+      <div class="feat-header"><span class="feat-icon">📋</span><span class="feat-title">Assumptions Ledger</span></div>
+      <div class="feat-desc">Agents register unstated hypotheses with importance (critical/high/medium/low) and a validation plan. Tracked across all stages in assumptions.json.</div>
+      <div class="feat-accent" style="background:#FCD34D;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#A78BFA;">08</div>
+      <div class="feat-header"><span class="feat-icon">📏</span><span class="feat-title">Scoring Rubrics</span></div>
+      <div class="feat-desc">Rubric-anchored scores 1–10 with textual descriptions per level. 6 dimensions. Evidence and assumption linking required per score.</div>
+      <div class="feat-accent" style="background:#A78BFA;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#F97316;">09</div>
+      <div class="feat-header"><span class="feat-icon">🛡️</span><span class="feat-title">Advisor Guardrails</span></div>
+      <div class="feat-desc">CEO/CTO cannot issue GO without rubric-anchored scores. Cannot GO if critical assumptions lack validation plans. Auto-CONDITIONAL-GO when unvalidated.</div>
+      <div class="feat-accent" style="background:#F97316;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#38BDF8;">10</div>
+      <div class="feat-header"><span class="feat-icon">✅</span><span class="feat-title">Validation Layer</span></div>
+      <div class="feat-desc">Schema validation, cross-reference checks (evidence_ids / assumption_ids exist), between-stage validation, CI integration via validate-gang.sh.</div>
+      <div class="feat-accent" style="background:#38BDF8;"></div>
+    </div>
+    <div class="feature-card-d">
+      <div class="feat-num" style="color:#FB7185;">11</div>
+      <div class="feat-header"><span class="feat-icon">⚡</span><span class="feat-title">Quality Mode Presets</span></div>
+      <div class="feat-desc">Quick Scout (~$1) · Product Review (~$5) · Investment Grade (~$20). Selected at /gang init, writes full config.yaml. Fully customizable after.</div>
+      <div class="feat-accent" style="background:#FB7185;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COMMANDS ── -->
+<div class="wrap" id="commands">
+  <div class="divider"></div>
+  <p class="sec-label">Commands Reference</p>
+
+  <div class="commands-grid-d">
+    <div class="cmd-row-d"><span class="cmd-tag">/gang run</span><span class="cmd-desc-d">Run full pipeline end-to-end (INIT → THINK → DEBATE → SCORE → ADVISE)</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang init</span><span class="cmd-desc-d">Initialize workspace, select quality mode, scan project, populate evidence.json</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang think</span><span class="cmd-desc-d">Committee setup question + parallel expert analysis dispatch</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang debate</span><span class="cmd-desc-d">Configurable cross-review debate (4 modes, 1–2 rounds)</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang score</span><span class="cmd-desc-d">Rubric-anchored plan synthesis and scoring with evidence linking</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang advise</span><span class="cmd-desc-d">CEO/CTO advisory with guardrails — auto-conditional on unvalidated assumptions</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang deliver</span><span class="cmd-desc-d">Generate GO Package: BRD, architecture, charter, risk register, API contracts</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang status</span><span class="cmd-desc-d">Show pipeline progress, committee health, cost tracker, validation state</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang config</span><span class="cmd-desc-d">Show or edit .gang/config.yaml — all current settings in one view</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang validate</span><span class="cmd-desc-d">Run validation checks: schemas, cross-references, file presence, section headings</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang evaluations</span><span class="cmd-desc-d">List all feature and project evaluations with costs and verdicts</span></div>
+    <div class="cmd-row-d"><span class="cmd-tag">/gang reinit</span><span class="cmd-desc-d">Re-run INIT, refresh evidence and context, reset downstream stages</span></div>
+  </div>
+</div>
+
+<!-- ── STATUS TERMINAL ── -->
+<div class="wrap">
+  <div class="divider"></div>
+  <p class="sec-label">Real-time Session Status</p>
+
+  <div class="terminal-block">
+    <div class="terminal-info">
+      <div class="terminal-info-title">Always know<br>where you are</div>
+      <div class="terminal-info-desc">Run <code style="background:rgba(255,255,255,0.07);padding:2px 8px;border-radius:5px;font-size:13px;font-family:'Fira Code',monospace;">/gang status</code> at any time to see the full picture — pipeline progress, agent health, budget consumed, and exactly what to run next.</div>
+      <div class="terminal-bullets">
+        <div class="terminal-bullet">Committee config with per-agent status and model</div>
+        <div class="terminal-bullet">Live cost tracking vs. budget limit</div>
+        <div class="terminal-bullet">Validation state per stage (passing/failing)</div>
+        <div class="terminal-bullet">Evidence entries + assumptions tracked</div>
+        <div class="terminal-bullet">Clear "Next" instruction — no guessing</div>
+      </div>
+    </div>
+    <div class="terminal-window">
+      <div class="terminal-titlebar">
+        <div class="tl-dot" style="background:#EF4444;"></div>
+        <div class="tl-dot" style="background:#F59E0B;"></div>
+        <div class="tl-dot" style="background:#22C55E;"></div>
+        <span class="tl-title">  /gang status</span>
+      </div>
+      <div class="terminal-body">
+        <span class="tl tl-head">Gang Committee Status</span>
+        <span class="tl tl-div">────────────────────────────────────</span>
+        <span class="tl tl-dim">Session: gang-20260330-143022</span>
+        <span class="tl tl-dim">Version: 1.3.0  ·  Mode: product_review</span>
+        <span class="tl tl-dim">Evaluation: feature — stock-details-page</span>
+        <span class="tl tl-blank"> </span>
+        <span class="tl tl-muted">Committee (5 active):</span>
+        <span class="tl tl-on">  [on]  PM Lead ............. deep (sonnet)</span>
+        <span class="tl tl-on">  [on]  Market Researcher ... deep (perplexity)</span>
+        <span class="tl tl-off">  [off] UX Researcher ....... disabled</span>
+        <span class="tl tl-on">  [on]  Finance Analyst ..... deep (gemini-2.5-pro)</span>
+        <span class="tl tl-on">  [on]  Solutions Architect . deep (sonnet)</span>
+        <span class="tl tl-off">  [off] Business Strategist . disabled</span>
+        <span class="tl tl-on">  [on]  CEO/CTO Advisor ..... deep (opus)</span>
+        <span class="tl tl-blank"> </span>
+        <span class="tl tl-muted">Evidence: 14 entries · 8 assumptions tracked</span>
+        <span class="tl tl-on">Validation: strict (passing)</span>
+        <span class="tl tl-blank"> </span>
+        <span class="tl tl-on">[done] INIT ........ $0.12  validated</span>
+        <span class="tl tl-on">[done] THINK ....... $1.23  validated (5/5)</span>
+        <span class="tl tl-warn">[ ->]  DEBATE ...... in progress</span>
+        <span class="tl tl-off">[    ] SCORE</span>
+        <span class="tl tl-off">[    ] ADVISE</span>
+        <span class="tl tl-off">[    ] DELIVER</span>
+        <span class="tl tl-blank"> </span>
+        <span class="tl tl-cost">Cost: ~$1.35 / $5.00 budget (27%)</span>
+        <span class="tl tl-blank"> </span>
+        <span class="tl tl-next">Next: /gang debate<span class="cursor"></span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="footer">
+  <p class="footer-tagline">One command. Configurable experts. Evidence-backed verdict.</p>
+  <div class="footer-ctas">
+    <a href="https://github.com/ebnrdwan/GangPlugin" class="footer-cta">⚡ Install Gang Plugin</a>
+    <a href="index.html" class="footer-cta footer-cta--ghost">← Back to Overview</a>
+  </div>
+  <p class="footer-version">Gang Plugin v1.3.0 · MIT License · Built for Claude Code</p>
+</footer>
+
+<script>
+/* ── WebGL fluid background (same shader as index.html) ── */
+(function () {
+  const canvas = document.getElementById('fluid-bg');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+  if (!gl) return;
+  const VERT = `attribute vec2 a_pos; void main(){gl_Position=vec4(a_pos,0.0,1.0);}`;
+  const FRAG = `
+    precision mediump float;
+    uniform float u_time; uniform vec2 u_res;
+    float hash(vec2 p){p=fract(p*vec2(127.1,311.7));p+=dot(p,p+17.5);return fract(p.x*p.y);}
+    float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+    float fbm(vec2 p){float v=0.0,a=0.52;mat2 rot=mat2(0.8660,0.5,-0.5,0.8660);for(int i=0;i<6;i++){v+=a*noise(p);p=rot*p*2.08;a*=0.46;}return v;}
+    void main(){
+      vec2 uv=gl_FragCoord.xy/u_res; float t=u_time*0.18;
+      vec2 p=uv*2.8;
+      vec2 q=vec2(fbm(p+t*0.50+vec2(0.00,0.00)),fbm(p+t*0.40+vec2(5.20,1.30)));
+      vec2 r=vec2(fbm(p+1.9*q+t*0.25+vec2(1.7,9.2)),fbm(p+1.9*q+t*0.20+vec2(8.3,2.8)));
+      float f=fbm(p+2.4*r);
+      vec3 col=mix(mix(vec3(0.002,0.006,0.022),vec3(0.000,0.078,0.118),clamp(f*2.1,0.0,1.0)),mix(vec3(0.000,0.128,0.168),vec3(0.000,0.182,0.210),clamp(f*2.1-1.0,0.0,1.0)),clamp(f*1.9-0.15,0.0,1.0));
+      float shimmer=fbm(p*3.5+r*2.0+t*0.6);
+      col+=vec3(0.0,0.016,0.022)*pow(shimmer,3.0)*0.9;
+      float vig=1.0-0.92*pow(length(uv-0.5)*1.78,2.0);
+      col*=vig;
+      gl_FragColor=vec4(col,1.0);
+    }`;
+  function compile(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  const prog=gl.createProgram();
+  gl.attachShader(prog,compile(gl.VERTEX_SHADER,VERT));
+  gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FRAG));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(prog,'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const uTime=gl.getUniformLocation(prog,'u_time');
+  const uRes=gl.getUniformLocation(prog,'u_res');
+  function resize(){const dpr=Math.min(window.devicePixelRatio||1,1.5);canvas.width=Math.floor(window.innerWidth*dpr);canvas.height=Math.floor(window.innerHeight*dpr);gl.viewport(0,0,canvas.width,canvas.height);}
+  resize();
+  window.addEventListener('resize',resize,{passive:true});
+  let start=null;
+  function draw(ts){if(!start)start=ts;const t=(ts-start)*0.001;gl.uniform1f(uTime,t);gl.uniform2f(uRes,canvas.width,canvas.height);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);requestAnimationFrame(draw);}
+  requestAnimationFrame(draw);
+})();
+
+/* ── Post-entrance lock ── */
+(function(){
+  const CARDS = '.stage-card,.agent-deep-card,.mode-card-d,.rubric-card,.feature-card-d,.cmd-row-d,.gap-card,.ev-card';
+  document.querySelectorAll(CARDS).forEach(el=>{
+    el.addEventListener('animationend',function onEnd(e){
+      if(e.animationName==='scaleIn'||e.animationName==='fadeSlideUp'){
+        el.classList.add('anim-done');
+        el.removeEventListener('animationend',onEnd);
+      }
+    });
+  });
+
+  /* Price scramble */
+  function scramble(el){
+    const final=el.dataset.final||el.textContent;
+    const chars='0123456789$~.–—·';
+    let frame=0,total=22;
+    const id=setInterval(()=>{
+      const p=frame/total,s=Math.round(p*final.length);
+      let d=final.slice(0,s);
+      for(let i=s;i<final.length;i++)d+=chars[Math.floor(Math.random()*chars.length)];
+      el.textContent=d;frame++;
+      if(frame>total){el.textContent=final;clearInterval(id);}
+    },48);
+  }
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(!e.isIntersecting)return;scramble(e.target);io.unobserve(e.target);});
+  },{threshold:0.7});
+  document.querySelectorAll('.mode-cost-d[data-final]').forEach(el=>{
+    el.textContent='···';io.observe(el);
+  });
+})();
+</script>
+
+</body>
+</html>
