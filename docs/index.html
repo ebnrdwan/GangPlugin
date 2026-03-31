@@ -64,15 +64,7 @@
       50%      { box-shadow: 0 0 18px 2px var(--glow-color, transparent); }
     }
 
-    /* ── Glow background ── */
-    .glow-orb {
-      position: fixed; pointer-events: none; z-index: 0;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
-      width: 800px; height: 800px;
-      top: -300px; left: 50%; transform: translateX(-50%);
-      animation: glowPulse 5s ease-in-out infinite;
-    }
+    /* .glow-orb replaced by #fluid-bg canvas */
 
     /* ── HERO ── */
     .hero {
@@ -423,6 +415,30 @@
     /* ── Divider ── */
     .divider { height: 1px; background: var(--border); margin: 0 0 56px; }
 
+    /* ── FLUID CANVAS ── */
+    #fluid-bg {
+      position: fixed;
+      top: -5%; left: -5%;
+      width: 110%; height: 110%;
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(72px) saturate(1.4) brightness(0.95);
+      will-change: filter;
+    }
+
+    /* Noise grain overlay for depth */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.028;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 180px 180px;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -442,7 +458,7 @@
 </head>
 <body>
 
-<div class="glow-orb"></div>
+<canvas id="fluid-bg" aria-hidden="true"></canvas>
 
 <!-- ── HERO ── -->
 <header class="hero">
@@ -785,6 +801,89 @@
   <a href="https://github.com/ebnrdwan/GangPlugin" class="footer-cta">⚡ Install Gang Plugin</a>
   <p class="footer-version">Gang Plugin v1.3.0 · MIT License · Built for Claude Code</p>
 </footer>
+
+
+<script>
+(function () {
+  const canvas = document.getElementById('fluid-bg');
+  const ctx    = canvas.getContext('2d');
+
+  /* ── Resize canvas to match viewport ── */
+  function resize() {
+    canvas.width  = Math.ceil(window.innerWidth  * 1.1);
+    canvas.height = Math.ceil(window.innerHeight * 1.1);
+  }
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+
+  /* ── Blob definitions ──
+     cx/cy  : base center (0–1 fraction of viewport)
+     r      : radius in px
+     color  : [R, G, B, alpha]  — alpha is peak opacity
+     fx/fy  : movement frequency multipliers
+     px/py  : phase offsets (radians)
+     ax/ay  : movement amplitude (0–1 fraction of viewport)
+  ── */
+  const blobs = [
+    // Indigo core — upper-left anchor
+    { cx:0.12, cy:0.18, r:560, color:[99,102,241,  0.38], fx:0.55, fy:0.70, px:0.00, py:1.40, ax:0.28, ay:0.22 },
+    // Purple — centre-top drift
+    { cx:0.65, cy:0.22, r:480, color:[139,92,246,  0.32], fx:0.80, fy:0.50, px:2.10, py:0.55, ax:0.26, ay:0.30 },
+    // Violet — centre-left slow
+    { cx:0.40, cy:0.58, r:520, color:[168,85,247,  0.28], fx:0.45, fy:0.85, px:4.20, py:2.10, ax:0.24, ay:0.20 },
+    // Deep indigo — bottom-right pool
+    { cx:0.82, cy:0.72, r:500, color:[79,70,229,   0.30], fx:0.90, fy:0.60, px:1.05, py:3.60, ax:0.20, ay:0.26 },
+    // Hot pink — accent, upper-right flash
+    { cx:0.78, cy:0.30, r:380, color:[236,72,153,  0.20], fx:1.10, fy:0.75, px:3.50, py:0.80, ax:0.22, ay:0.28 },
+    // Fuchsia — bottom-left whisper
+    { cx:0.15, cy:0.80, r:440, color:[217,70,239,  0.18], fx:0.65, fy:1.05, px:5.10, py:1.20, ax:0.26, ay:0.22 },
+    // Amber — subtle warm tone, centre
+    { cx:0.50, cy:0.92, r:360, color:[249,115,22,  0.13], fx:1.20, fy:0.55, px:0.70, py:4.00, ax:0.18, ay:0.16 },
+    // Cyan accent — mid-left
+    { cx:0.25, cy:0.48, r:320, color:[34,211,238,  0.10], fx:0.75, fy:1.30, px:2.80, py:2.50, ax:0.20, ay:0.18 },
+  ];
+
+  let t     = 0;
+  const SPD = 0.00022; // very slow — full cycle ≈ 28 000 frames (~470s at 60fps)
+
+  function draw() {
+    const W = canvas.width;
+    const H = canvas.height;
+
+    /* solid dark base */
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#0D0F1F';
+    ctx.fillRect(0, 0, W, H);
+
+    /* additive blending makes overlapping blobs glow brighter */
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (const b of blobs) {
+      const x = (b.cx + Math.sin(t * b.fx + b.px) * b.ax) * W;
+      const y = (b.cy + Math.cos(t * b.fy + b.py) * b.ay) * H;
+
+      /* secondary wobble — makes movement less mechanical */
+      const wx = Math.sin(t * b.fx * 1.7 + b.py) * 0.06 * W;
+      const wy = Math.cos(t * b.fy * 1.3 + b.px) * 0.05 * H;
+
+      const grd = ctx.createRadialGradient(x + wx, y + wy, 0, x + wx, y + wy, b.r);
+      const [r, g, bl, a] = b.color;
+      grd.addColorStop(0,    `rgba(${r},${g},${bl},${a})`);
+      grd.addColorStop(0.35, `rgba(${r},${g},${bl},${(a * 0.55).toFixed(3)})`);
+      grd.addColorStop(0.70, `rgba(${r},${g},${bl},${(a * 0.18).toFixed(3)})`);
+      grd.addColorStop(1,    `rgba(${r},${g},${bl},0)`);
+
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    t += SPD;
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+})();
+</script>
 
 </body>
 </html>
