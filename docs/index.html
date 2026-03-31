@@ -415,28 +415,26 @@
     /* ── Divider ── */
     .divider { height: 1px; background: var(--border); margin: 0 0 56px; }
 
-    /* ── FLUID CANVAS ── */
+    /* ── FLUID WebGL CANVAS ── */
     #fluid-bg {
       position: fixed;
-      top: -5%; left: -5%;
-      width: 110%; height: 110%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       z-index: 0;
       pointer-events: none;
-      filter: blur(72px) saturate(1.4) brightness(0.95);
-      will-change: filter;
     }
 
-    /* Noise grain overlay for depth */
+    /* Grain overlay for cinematic depth */
     body::after {
       content: '';
       position: fixed;
       inset: 0;
       z-index: 2;
       pointer-events: none;
-      opacity: 0.028;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.032;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       background-repeat: repeat;
-      background-size: 180px 180px;
+      background-size: 160px 160px;
     }
 
     /* Scrollbar */
@@ -806,82 +804,129 @@
 <script>
 (function () {
   const canvas = document.getElementById('fluid-bg');
-  const ctx    = canvas.getContext('2d');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+  if (!gl) return; // fallback: dark bg stays
 
-  /* ── Resize canvas to match viewport ── */
+  /* ── Vertex shader — full-screen quad ── */
+  const VERT = `
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
+
+  /* ── Fragment shader — domain-warped fBm water ──
+     Technique by Inigo Quilez: fbm(p + fbm(p + fbm(p)))
+     creates organic, turbulent, water-like flow.
+     Colors: deep navy → teal → bright crystal cyan           ── */
+  const FRAG = `
+    precision mediump float;
+    uniform float  u_time;
+    uniform vec2   u_res;
+
+    float hash(vec2 p) {
+      p  = fract(p * vec2(127.1, 311.7));
+      p += dot(p, p + 17.5);
+      return fract(p.x * p.y);
+    }
+
+    float noise(vec2 p) {
+      vec2 i = floor(p), f = fract(p);
+      f = f * f * (3.0 - 2.0 * f);
+      return mix(
+        mix(hash(i),           hash(i + vec2(1,0)), f.x),
+        mix(hash(i+vec2(0,1)), hash(i + vec2(1,1)), f.x),
+        f.y
+      );
+    }
+
+    /* Rotated fBm — rotation removes directional artifacts */
+    float fbm(vec2 p) {
+      float  v = 0.0, a = 0.52;
+      mat2 rot = mat2( 0.8660, 0.5, -0.5, 0.8660 ); /* 30 deg */
+      for (int i = 0; i < 6; i++) {
+        v += a * noise(p);
+        p  = rot * p * 2.08;
+        a *= 0.46;
+      }
+      return v;
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / u_res;
+      float t = u_time * 0.18;
+
+      /* Domain warping — three nested fbm calls */
+      vec2  p  = uv * 2.8;
+      vec2  q  = vec2(fbm(p  + t * 0.50 + vec2(0.00, 0.00)),
+                      fbm(p  + t * 0.40 + vec2(5.20, 1.30)));
+      vec2  r  = vec2(fbm(p  + 1.9*q   + t * 0.25 + vec2(1.7, 9.2)),
+                      fbm(p  + 1.9*q   + t * 0.20 + vec2(8.3, 2.8)));
+      float f  = fbm(p + 2.4 * r);
+
+      /* ── Colour palette: deep navy → rich teal → crystal cyan ── */
+      vec3 col = mix(
+        mix( vec3(0.012, 0.038, 0.110),   /* deepest navy   */
+             vec3(0.000, 0.320, 0.480),   /* mid teal       */
+             clamp(f * 2.1,        0.0, 1.0) ),
+        mix( vec3(0.000, 0.520, 0.620),   /* vivid teal     */
+             vec3(0.000, 0.760, 0.820),   /* crystal cyan   */
+             clamp(f * 2.1 - 1.0,  0.0, 1.0) ),
+        clamp(f * 1.9 - 0.15, 0.0, 1.0)
+      );
+
+      /* Subtle caustic shimmer — high-freq layer */
+      float shimmer = fbm(p * 3.5 + r * 2.0 + t * 0.6);
+      col += vec3(0.0, 0.06, 0.08) * pow(shimmer, 3.0) * 1.8;
+
+      /* Vignette — darken corners like deep water */
+      float vig = 1.0 - 0.72 * pow(length(uv - 0.5) * 1.55, 2.2);
+      col *= vig;
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER,   VERT));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog); gl.useProgram(prog);
+
+  /* Full-screen quad */
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes  = gl.getUniformLocation(prog, 'u_res');
+
   function resize() {
-    canvas.width  = Math.ceil(window.innerWidth  * 1.1);
-    canvas.height = Math.ceil(window.innerHeight * 1.1);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width  = Math.floor(window.innerWidth  * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
   }
   resize();
   window.addEventListener('resize', resize, { passive: true });
 
-  /* ── Blob definitions ──
-     cx/cy  : base center (0–1 fraction of viewport)
-     r      : radius in px
-     color  : [R, G, B, alpha]  — alpha is peak opacity
-     fx/fy  : movement frequency multipliers
-     px/py  : phase offsets (radians)
-     ax/ay  : movement amplitude (0–1 fraction of viewport)
-  ── */
-  const blobs = [
-    // Indigo core — upper-left anchor
-    { cx:0.12, cy:0.18, r:560, color:[99,102,241,  0.38], fx:0.55, fy:0.70, px:0.00, py:1.40, ax:0.28, ay:0.22 },
-    // Purple — centre-top drift
-    { cx:0.65, cy:0.22, r:480, color:[139,92,246,  0.32], fx:0.80, fy:0.50, px:2.10, py:0.55, ax:0.26, ay:0.30 },
-    // Violet — centre-left slow
-    { cx:0.40, cy:0.58, r:520, color:[168,85,247,  0.28], fx:0.45, fy:0.85, px:4.20, py:2.10, ax:0.24, ay:0.20 },
-    // Deep indigo — bottom-right pool
-    { cx:0.82, cy:0.72, r:500, color:[79,70,229,   0.30], fx:0.90, fy:0.60, px:1.05, py:3.60, ax:0.20, ay:0.26 },
-    // Hot pink — accent, upper-right flash
-    { cx:0.78, cy:0.30, r:380, color:[236,72,153,  0.20], fx:1.10, fy:0.75, px:3.50, py:0.80, ax:0.22, ay:0.28 },
-    // Fuchsia — bottom-left whisper
-    { cx:0.15, cy:0.80, r:440, color:[217,70,239,  0.18], fx:0.65, fy:1.05, px:5.10, py:1.20, ax:0.26, ay:0.22 },
-    // Amber — subtle warm tone, centre
-    { cx:0.50, cy:0.92, r:360, color:[249,115,22,  0.13], fx:1.20, fy:0.55, px:0.70, py:4.00, ax:0.18, ay:0.16 },
-    // Cyan accent — mid-left
-    { cx:0.25, cy:0.48, r:320, color:[34,211,238,  0.10], fx:0.75, fy:1.30, px:2.80, py:2.50, ax:0.20, ay:0.18 },
-  ];
-
-  let t     = 0;
-  const SPD = 0.00022; // very slow — full cycle ≈ 28 000 frames (~470s at 60fps)
-
-  function draw() {
-    const W = canvas.width;
-    const H = canvas.height;
-
-    /* solid dark base */
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#0D0F1F';
-    ctx.fillRect(0, 0, W, H);
-
-    /* additive blending makes overlapping blobs glow brighter */
-    ctx.globalCompositeOperation = 'lighter';
-
-    for (const b of blobs) {
-      const x = (b.cx + Math.sin(t * b.fx + b.px) * b.ax) * W;
-      const y = (b.cy + Math.cos(t * b.fy + b.py) * b.ay) * H;
-
-      /* secondary wobble — makes movement less mechanical */
-      const wx = Math.sin(t * b.fx * 1.7 + b.py) * 0.06 * W;
-      const wy = Math.cos(t * b.fy * 1.3 + b.px) * 0.05 * H;
-
-      const grd = ctx.createRadialGradient(x + wx, y + wy, 0, x + wx, y + wy, b.r);
-      const [r, g, bl, a] = b.color;
-      grd.addColorStop(0,    `rgba(${r},${g},${bl},${a})`);
-      grd.addColorStop(0.35, `rgba(${r},${g},${bl},${(a * 0.55).toFixed(3)})`);
-      grd.addColorStop(0.70, `rgba(${r},${g},${bl},${(a * 0.18).toFixed(3)})`);
-      grd.addColorStop(1,    `rgba(${r},${g},${bl},0)`);
-
-      ctx.fillStyle = grd;
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    t += SPD;
+  /* ── Render loop ── */
+  let start = null;
+  function draw(ts) {
+    if (!start) start = ts;
+    const t = (ts - start) * 0.001; // seconds
+    gl.uniform1f(uTime, t);
+    gl.uniform2f(uRes,  canvas.width, canvas.height);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     requestAnimationFrame(draw);
   }
-
-  draw();
+  requestAnimationFrame(draw);
 })();
 </script>
 
