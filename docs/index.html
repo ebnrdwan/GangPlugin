@@ -9,10 +9,10 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:    #0D0F1F;
-      --bg2:   #12142A;
-      --card:  rgba(255,255,255,0.04);
-      --border:rgba(255,255,255,0.08);
+      --bg:    #040509;
+      --bg2:   #07080F;
+      --card:  rgba(255,255,255,0.07);
+      --border:rgba(255,255,255,0.12);
       --text:  #FFFFFF;
       --muted: #94A3B8;
       --c1: #6366F1;
@@ -963,23 +963,23 @@
                       fbm(p  + 1.9*q   + t * 0.20 + vec2(8.3, 2.8)));
       float f  = fbm(p + 2.4 * r);
 
-      /* ── Colour palette: near-black → dark teal → deep cyan (darker) ── */
+      /* ── Colour palette: abyss → midnight teal (very dark) ── */
       vec3 col = mix(
-        mix( vec3(0.003, 0.008, 0.030),   /* near-black     */
-             vec3(0.000, 0.130, 0.200),   /* dark teal      */
+        mix( vec3(0.001, 0.003, 0.012),   /* abyss black    */
+             vec3(0.000, 0.055, 0.090),   /* midnight teal  */
              clamp(f * 2.1,        0.0, 1.0) ),
-        mix( vec3(0.000, 0.220, 0.280),   /* rich teal      */
-             vec3(0.000, 0.320, 0.370),   /* deep cyan      */
+        mix( vec3(0.000, 0.090, 0.120),   /* deep teal      */
+             vec3(0.000, 0.130, 0.150),   /* dark cyan      */
              clamp(f * 2.1 - 1.0,  0.0, 1.0) ),
         clamp(f * 1.9 - 0.15, 0.0, 1.0)
       );
 
-      /* Subtle caustic shimmer — kept very dim */
+      /* Barely-visible caustic shimmer */
       float shimmer = fbm(p * 3.5 + r * 2.0 + t * 0.6);
-      col += vec3(0.0, 0.025, 0.035) * pow(shimmer, 3.0) * 1.2;
+      col += vec3(0.0, 0.010, 0.014) * pow(shimmer, 3.0) * 0.8;
 
-      /* Stronger vignette — push corners to near-black */
-      float vig = 1.0 - 0.88 * pow(length(uv - 0.5) * 1.70, 2.0);
+      /* Heavy vignette — crush corners to true black */
+      float vig = 1.0 - 0.96 * pow(length(uv - 0.5) * 1.85, 2.0);
       col *= vig;
 
       gl_FragColor = vec4(col, 1.0);
