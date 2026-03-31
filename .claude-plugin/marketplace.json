@@ -1,20 +1,20 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "gang-marketplace",
-  "version": "1.1.0",
-  "description": "Gang — Multi-agent business committee for Claude Code",
+  "version": "1.3.0",
+  "description": "Gang — Configurable multi-agent business committee for Claude Code",
   "owner": {
     "name": "ebnrdwan"
   },
   "plugins": [
     {
       "name": "gang",
-      "description": "Multi-agent business committee that orchestrates domain experts through structured debate to produce scored strategic plans and executive-ready recommendations",
-      "version": "1.1.0",
+      "description": "Configurable, auditable, cost-aware multi-agent business committee. Orchestrates domain experts through evidence-backed structured debate with rubric-anchored scoring, budget tracking, multi-provider routing, and advisor guardrails to produce scored strategic plans and executive Go/No-Go recommendations.",
+      "version": "1.3.0",
       "author": {
         "name": "ebnrdwan"
       },
-      "source": "./gang",
+      "source": ".",
       "category": "productivity",
       "keywords": [
         "business-strategy",
@@ -27,7 +27,17 @@
         "finance",
         "architecture",
         "executive-advisory",
-        "google-stitch"
+        "google-stitch",
+        "domain-expert",
+        "brd",
+        "deliverables",
+        "evidence-ledger",
+        "scoring-rubric",
+        "cost-management",
+        "multi-provider",
+        "validation",
+        "configurable",
+        "budget-adaptive"
       ],
       "license": "MIT"
     }

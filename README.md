@@ -212,7 +212,9 @@ These are hard constraints in the CEO/CTO Advisor's prompt, not just guidelines.
 
 ## Full Documentation
 
-See **[gang/README.md](gang/README.md)** for complete documentation including:
+📖 **[Interactive Deep Dive →](https://ebnrdwan.github.io/GangPlugin/deep-dive.html)**
+
+The deep dive page covers:
 - Detailed breakdown of all 11 v1.3.0 features with config examples
 - Token estimation formula and cost calculation examples
 - Budget-adaptive downgrade priority table and worked scenarios
