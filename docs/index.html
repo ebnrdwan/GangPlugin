@@ -64,6 +64,50 @@
       50%      { box-shadow: 0 0 18px 2px var(--glow-color, transparent); }
     }
 
+    /* ── LIGHTNING BORDER HOVER ── */
+    @keyframes lightningFlash {
+      0%   {
+        box-shadow:
+          0 0 0 1px var(--lightning-color, rgba(0,206,209,0.45)),
+          0 0 10px 2px var(--lightning-color, rgba(0,206,209,0.20)),
+          0 0 24px 5px var(--lightning-dim, rgba(0,206,209,0.08));
+      }
+      /* first bolt */
+      14% {
+        box-shadow:
+          0 0 0 1.5px rgba(255,255,255,0.95),
+          0 0 18px 5px var(--lightning-color, rgba(0,206,209,0.65)),
+          0 0 48px 14px var(--lightning-dim, rgba(0,206,209,0.22)),
+          0 0 80px 20px var(--lightning-far, rgba(0,206,209,0.08));
+      }
+      20% {
+        box-shadow:
+          0 0 0 1px var(--lightning-color, rgba(0,206,209,0.35)),
+          0 0 8px 2px var(--lightning-color, rgba(0,206,209,0.18)),
+          0 0 20px 4px var(--lightning-dim, rgba(0,206,209,0.07));
+      }
+      /* second bolt — slightly weaker */
+      32% {
+        box-shadow:
+          0 0 0 1.5px rgba(255,255,255,0.80),
+          0 0 14px 4px var(--lightning-color, rgba(0,206,209,0.55)),
+          0 0 38px 10px var(--lightning-dim, rgba(0,206,209,0.18)),
+          0 0 60px 14px var(--lightning-far, rgba(0,206,209,0.06));
+      }
+      40% {
+        box-shadow:
+          0 0 0 1px var(--lightning-color, rgba(0,206,209,0.30)),
+          0 0 8px 2px var(--lightning-color, rgba(0,206,209,0.14)),
+          0 0 18px 4px var(--lightning-dim, rgba(0,206,209,0.06));
+      }
+      100% {
+        box-shadow:
+          0 0 0 1px var(--lightning-color, rgba(0,206,209,0.40)),
+          0 0 10px 2px var(--lightning-color, rgba(0,206,209,0.18)),
+          0 0 22px 5px var(--lightning-dim, rgba(0,206,209,0.07));
+      }
+    }
+
     /* .glow-orb replaced by #fluid-bg canvas */
 
     /* ── HERO ── */
@@ -151,12 +195,40 @@
     .stage-card:nth-child(5) { --stage-color: var(--c5); animation-delay: 1.5s; }
     .stage-card:nth-child(6) { --stage-color: var(--c6); animation-delay: 1.7s; }
 
-    .stage-card:nth-child(1):hover { box-shadow: 0 8px 32px rgba(99,102,241,0.18); }
-    .stage-card:nth-child(2):hover { box-shadow: 0 8px 32px rgba(139,92,246,0.18); }
-    .stage-card:nth-child(3):hover { box-shadow: 0 8px 32px rgba(168,85,247,0.18); }
-    .stage-card:nth-child(4):hover { box-shadow: 0 8px 32px rgba(236,72,153,0.18); }
-    .stage-card:nth-child(5):hover { box-shadow: 0 8px 32px rgba(217,70,239,0.18); }
-    .stage-card:nth-child(6):hover { box-shadow: 0 8px 32px rgba(249,115,22,0.18); }
+    /* Stage cards: lightning uses their own stage color */
+    .stage-card:nth-child(1) {
+      --lightning-color: rgba(99,102,241,0.65);
+      --lightning-dim:   rgba(99,102,241,0.20);
+      --lightning-far:   rgba(99,102,241,0.07);
+    }
+    .stage-card:nth-child(2) {
+      --lightning-color: rgba(139,92,246,0.65);
+      --lightning-dim:   rgba(139,92,246,0.20);
+      --lightning-far:   rgba(139,92,246,0.07);
+    }
+    .stage-card:nth-child(3) {
+      --lightning-color: rgba(168,85,247,0.65);
+      --lightning-dim:   rgba(168,85,247,0.20);
+      --lightning-far:   rgba(168,85,247,0.07);
+    }
+    .stage-card:nth-child(4) {
+      --lightning-color: rgba(236,72,153,0.65);
+      --lightning-dim:   rgba(236,72,153,0.20);
+      --lightning-far:   rgba(236,72,153,0.07);
+    }
+    .stage-card:nth-child(5) {
+      --lightning-color: rgba(217,70,239,0.65);
+      --lightning-dim:   rgba(217,70,239,0.20);
+      --lightning-far:   rgba(217,70,239,0.07);
+    }
+    .stage-card:nth-child(6) {
+      --lightning-color: rgba(249,115,22,0.65);
+      --lightning-dim:   rgba(249,115,22,0.20);
+      --lightning-far:   rgba(249,115,22,0.07);
+    }
+    .stage-card:hover {
+      animation: lightningFlash 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
 
     .stage-num {
       width: 34px; height: 34px; border-radius: 50%;
@@ -230,7 +302,11 @@
       transition: border-color 0.25s, transform 0.25s;
       position: relative; overflow: hidden;
     }
-    .agent-card:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-3px); }
+    .agent-card:hover {
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-3px);
+      animation: lightningFlash 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
     .agent-card:nth-child(1) { animation-delay: 2.2s; }
     .agent-card:nth-child(2) { animation-delay: 2.35s; }
     .agent-card:nth-child(3) { animation-delay: 2.5s; }
@@ -299,12 +375,30 @@
       position: relative; overflow: hidden;
     }
     .mode-card:hover { transform: translateY(-4px); }
-    .mode-card:nth-child(1) { animation-delay: 3.7s; border-color: rgba(99,102,241,0.18); }
-    .mode-card:nth-child(2) { animation-delay: 3.9s; border-color: rgba(139,92,246,0.22); }
-    .mode-card:nth-child(3) { animation-delay: 4.1s; border-color: rgba(249,115,22,0.18); }
-    .mode-card:nth-child(1):hover { box-shadow: 0 8px 32px rgba(99,102,241,0.12); }
-    .mode-card:nth-child(2):hover { box-shadow: 0 8px 32px rgba(139,92,246,0.15); }
-    .mode-card:nth-child(3):hover { box-shadow: 0 8px 32px rgba(249,115,22,0.12); }
+    .mode-card:nth-child(1) {
+      animation-delay: 3.7s;
+      border-color: rgba(99,102,241,0.18);
+      --lightning-color: rgba(99,102,241,0.60);
+      --lightning-dim:   rgba(99,102,241,0.18);
+      --lightning-far:   rgba(99,102,241,0.06);
+    }
+    .mode-card:nth-child(2) {
+      animation-delay: 3.9s;
+      border-color: rgba(139,92,246,0.22);
+      --lightning-color: rgba(139,92,246,0.60);
+      --lightning-dim:   rgba(139,92,246,0.18);
+      --lightning-far:   rgba(139,92,246,0.06);
+    }
+    .mode-card:nth-child(3) {
+      animation-delay: 4.1s;
+      border-color: rgba(249,115,22,0.18);
+      --lightning-color: rgba(249,115,22,0.60);
+      --lightning-dim:   rgba(249,115,22,0.18);
+      --lightning-far:   rgba(249,115,22,0.06);
+    }
+    .mode-card:hover {
+      animation: lightningFlash 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
     .mode-card::before {
       content: ''; position: absolute;
       inset: 0; border-radius: 18px;
@@ -342,7 +436,11 @@
       opacity: 0; animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
       transition: border-color 0.25s, transform 0.25s;
     }
-    .feature-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    .feature-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+      animation: lightningFlash 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
     .feature-card:nth-child(1)  { animation-delay: 4.4s; }
     .feature-card:nth-child(2)  { animation-delay: 4.5s; }
     .feature-card:nth-child(3)  { animation-delay: 4.6s; }
@@ -374,7 +472,10 @@
       opacity: 0; animation: fadeSlideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
       transition: border-color 0.25s;
     }
-    .cmd-row:hover { border-color: rgba(255,255,255,0.16); }
+    .cmd-row:hover {
+      border-color: rgba(255,255,255,0.16);
+      animation: lightningFlash 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
     .cmd-row:nth-child(1)  { animation-delay: 5.6s; }
     .cmd-row:nth-child(2)  { animation-delay: 5.7s; }
     .cmd-row:nth-child(3)  { animation-delay: 5.8s; }
@@ -862,23 +963,23 @@
                       fbm(p  + 1.9*q   + t * 0.20 + vec2(8.3, 2.8)));
       float f  = fbm(p + 2.4 * r);
 
-      /* ── Colour palette: deep navy → rich teal → crystal cyan ── */
+      /* ── Colour palette: near-black → dark teal → deep cyan (darker) ── */
       vec3 col = mix(
-        mix( vec3(0.012, 0.038, 0.110),   /* deepest navy   */
-             vec3(0.000, 0.320, 0.480),   /* mid teal       */
+        mix( vec3(0.003, 0.008, 0.030),   /* near-black     */
+             vec3(0.000, 0.130, 0.200),   /* dark teal      */
              clamp(f * 2.1,        0.0, 1.0) ),
-        mix( vec3(0.000, 0.520, 0.620),   /* vivid teal     */
-             vec3(0.000, 0.760, 0.820),   /* crystal cyan   */
+        mix( vec3(0.000, 0.220, 0.280),   /* rich teal      */
+             vec3(0.000, 0.320, 0.370),   /* deep cyan      */
              clamp(f * 2.1 - 1.0,  0.0, 1.0) ),
         clamp(f * 1.9 - 0.15, 0.0, 1.0)
       );
 
-      /* Subtle caustic shimmer — high-freq layer */
+      /* Subtle caustic shimmer — kept very dim */
       float shimmer = fbm(p * 3.5 + r * 2.0 + t * 0.6);
-      col += vec3(0.0, 0.06, 0.08) * pow(shimmer, 3.0) * 1.8;
+      col += vec3(0.0, 0.025, 0.035) * pow(shimmer, 3.0) * 1.2;
 
-      /* Vignette — darken corners like deep water */
-      float vig = 1.0 - 0.72 * pow(length(uv - 0.5) * 1.55, 2.2);
+      /* Stronger vignette — push corners to near-black */
+      float vig = 1.0 - 0.88 * pow(length(uv - 0.5) * 1.70, 2.0);
       col *= vig;
 
       gl_FragColor = vec4(col, 1.0);
