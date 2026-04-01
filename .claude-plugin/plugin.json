@@ -1,6 +1,6 @@
 {
   "name": "gang",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Configurable, auditable, cost-aware multi-agent business committee. Orchestrates domain experts through evidence-backed structured debate with rubric-anchored scoring, budget tracking, multi-provider routing, and advisor guardrails to produce scored strategic plans and executive Go/No-Go recommendations.",
   "author": {
     "name": "ebnrdwan"

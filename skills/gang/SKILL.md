@@ -1,10 +1,10 @@
 ---
 name: gang
 description: "Multi-agent business committee that evaluates product ideas through structured expert debate. Use when: the user wants to evaluate a business idea, product concept, or strategic initiative; needs multi-perspective analysis (product, market, UX, finance, tech, strategy); wants scored strategic plans with Go/No-Go recommendation; needs Google Stitch-ready UI specifications; or asks to 'run a gang review', 'evaluate this idea', 'should we build this'. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status, config, evaluations, validate."
-version: 1.3.0
+version: 1.3.1
 ---
 
-# Gang — Multi-Agent Business Committee v1.3.0
+# Gang — Multi-Agent Business Committee v1.3.1
 
 A 6-stage pipeline that orchestrates configurable domain experts through structured debate to produce evidence-backed, rubric-anchored scored strategic plans and executive-ready recommendations. Every aspect is configurable: roles, debate mode, cost budget, model routing, evidence linking, scoring rubrics, validation, and failure handling.
 
@@ -313,9 +313,112 @@ Show the key competitors found and ask the user to confirm, add, or correct. Use
 
 Same as v1.2.0 — SKIP questions whose answers are obvious from scan. Adapt options to this specific project/market.
 
-**Round 0 — Domain Expert (1 question, always ask):**
+**Round 0 — Domain Expert (always ask):**
+
 Question 0 — "Include a Domain Expert?"
-If yes: auto-generate `{output_root}/domain-expert-profile.md` using the template at `{plugin_root}/skills/gang/references/domain-expert-template.md`. Update `state.json.domain_expert_enabled: true`.
+If yes: run the **Domain Expert Profiling Interview** below, then generate `{output_root}/domain-expert-profile.md` using the template at `{plugin_root}/skills/gang/references/domain-expert-template.md`. Update `state.json.domain_expert_enabled: true`.
+
+#### Domain Expert Profiling Interview
+
+When the user opts in, ask 3 rounds of questions using `AskUserQuestion`. The goal is to build an expert profile that **challenges assumptions and surfaces real constraints** — NOT one that confirms existing plans. All questions adapt to the domain detected from the project scan.
+
+**Profiling Round 1 — Domain & Perspective (2 questions, single AskUserQuestion call):**
+
+Question P1a — "Which domain lens should the expert use?"
+- Auto-detect the primary domain from the project scan (e.g., fintech, healthtech, e-commerce, edtech, logistics, social, SaaS).
+- Present 3-4 options: the detected domain + 2-3 adjacent domains that offer a different but relevant angle.
+- Example for a stock app: "Retail Brokerage Technology", "Financial Data & Analytics", "Consumer Fintech", "Regulatory Compliance (SEC/FINRA)"
+- The user may pick one OR specify a custom domain.
+
+Question P1b — Sub-Specialization (conditional — only ask when the domain has meaningful sub-categories)
+
+Many domains have internal specializations where the expert's advice changes dramatically depending on the niche. After P1a is answered, check if the chosen domain has sub-categories that would materially change the expert's perspective. If yes, ask this question in the SAME AskUserQuestion call as P2. If the domain is narrow enough already, skip P1b.
+
+**When to ask P1b:** The domain has sub-categories where regulations, user behavior, unit economics, or technical requirements differ significantly between niches.
+
+**When to skip P1b:** The domain is already specific enough (e.g., user picked "Regulatory Compliance (SEC/FINRA)" — that's already a niche).
+
+Generate options dynamically based on the P1a answer. Examples by domain:
+
+- **Finance / Trading / Signals:**
+  - Trading style: "Intraday / Scalping" — "Sub-minute to same-day holds. Real-time data, low latency, pattern recognition, PDT rules." | "Swing Trading" — "Multi-day to multi-week holds. Technical analysis, momentum, risk/reward setups." | "Long-term Investing" — "Months to years. Fundamentals, portfolio construction, suitability, fiduciary." | "Algorithmic / Quantitative" — "Automated strategies, backtesting, execution algorithms, market microstructure."
+  - Asset class: "Equities (US stocks)" — "SEC/FINRA regulated, exchange data licensing, market hours." | "Commodities / Metals" — "CFTC regulated, futures contracts, margin requirements, geopolitical factors." | "Forex" — "Decentralized, 24/5, high leverage, NFA regulated, different broker models." | "Crypto" — "24/7, exchange-specific, evolving regulation, custody concerns."
+  - If both sub-categories are relevant (e.g., a signals app covers trading style AND asset class), ask both as multiSelect or two separate options within P1b.
+
+- **Healthcare / Healthtech:**
+  - Specialty: "Primary Care" | "Specialty / Surgery" | "Mental Health / Behavioral" | "Chronic Disease Management"
+  - Care model: "Fee-for-Service" | "Value-Based Care" | "Direct-to-Consumer (DTC)" | "B2B (Health Systems / Payers)"
+
+- **E-commerce / Marketplace:**
+  - Product type: "Physical Goods" | "Digital Products / SaaS" | "Services Marketplace" | "Subscription Commerce"
+  - Market segment: "B2C Consumer" | "B2B / Wholesale" | "D2C (Direct to Consumer)" | "Cross-border / International"
+
+- **Education / Edtech:**
+  - Audience: "K-12 Students" | "Higher Education" | "Professional / Corporate Training" | "Self-directed Learners"
+  - Model: "Live / Synchronous" | "Self-paced / Async" | "Cohort-based" | "Tutoring / 1-on-1"
+
+- **Logistics / Supply Chain:**
+  - Segment: "Last-mile Delivery" | "Freight / LTL" | "Warehousing / Fulfillment" | "Fleet Management"
+  - Scope: "Domestic" | "Cross-border / International" | "Cold Chain / Specialized" | "Returns / Reverse Logistics"
+
+For domains not listed above, dynamically generate 3-4 sub-specialization options based on the project scan findings. If the project scan reveals enough specifics to determine the sub-category (e.g., code clearly shows intraday candle data + real-time WebSocket feeds), pre-select the detected niche as the first option and mark it "(Detected from codebase)".
+
+**Impact of P1b on the profile:** Sub-specialization answers directly shape:
+- `## Your Persona` — the expert's specific experience (e.g., "10 years building swing trading signal platforms" vs "former commodity futures desk analyst")
+- `## Key Expertise Areas` — niche-specific knowledge (e.g., PDT rules for intraday vs suitability rules for long-term)
+- `## Industry Benchmarks` — metrics vary dramatically by niche (e.g., signal accuracy expectations: 55% for intraday scalping is good, 55% for long-term value picks is terrible)
+- `## Common Pitfalls` — niche-specific traps (e.g., "calling intraday signals 'predictions' without disclaimers" vs "recommending individual stocks without suitability assessment")
+
+Question P2 — "What perspective should the expert bring?"
+- Options should represent different vantage points, NOT different levels of optimism:
+  - "Industry Practitioner" — "Built products in this space. Knows what actually works vs what sounds good in a pitch deck."
+  - "Regulatory / Compliance" — "Focuses on what's legally required, what creates liability, and what gets companies fined."
+  - "End-User / Domain Customer" — "Thinks like the actual user. Knows their real workflows, frustrations, and alternatives."
+  - "Market Analyst / Economist" — "Tracks industry trends, unit economics, and market structure. Knows who survives downturns."
+
+**Profiling Round 2 — Risk Focus & Blind Spots (2 questions, single AskUserQuestion call):**
+
+Question P3 — "What should the expert be most skeptical about?"
+- This question surfaces the user's own uncertainty — where they WANT pushback. Frame it neutrally:
+  - "Market demand assumptions" — "Is there real demand, or are we projecting our own needs?"
+  - "Technical feasibility claims" — "Can we actually build this at the proposed scale/cost/timeline?"
+  - "Regulatory & legal exposure" — "Are there compliance, licensing, or liability risks we're underestimating?"
+  - "Competitive defensibility" — "Can incumbents copy this trivially? Is the moat real?"
+
+Question P4 — "What do teams in this domain typically get wrong?"
+- This primes the expert to catch common domain-specific mistakes. Options adapt to the detected domain AND sub-specialization from P1b:
+  - For fintech (general): "Underestimating data licensing costs", "Ignoring compliance until launch", "Assuming users want more features vs simplicity", "Building for traders instead of investors"
+  - For fintech + intraday signals: "Calling signals 'predictions' without risk disclaimers", "Underestimating real-time data costs (exchange licensing)", "Ignoring PDT rule implications for users with <$25K", "Assuming backtested accuracy translates to live performance"
+  - For fintech + swing trading: "Overpromising signal accuracy without track record", "Not differentiating from free TradingView strategies", "Ignoring the 'signal fatigue' problem (too many alerts)", "Assuming technical analysis has predictive power without evidence"
+  - For fintech + long-term investing: "Giving stock recommendations without RIA registration", "Ignoring suitability requirements", "Competing with free robo-advisors on features", "Assuming retail investors stick with paid tools in bear markets"
+  - For fintech + commodities/metals: "Not accounting for CFTC (not SEC) regulatory framework", "Underestimating margin requirement complexity", "Ignoring geopolitical risk modeling", "Assuming equity-market user behavior applies to commodities"
+  - For healthtech: "Underestimating HIPAA scope", "Assuming doctors will change workflows", "Ignoring reimbursement models", "Building for patients when payers decide"
+  - For e-commerce: "Ignoring unit economics at scale", "Underestimating logistics complexity", "Assuming marketplace network effects are automatic", "Over-investing in acquisition vs retention"
+  - For SaaS: "Underestimating enterprise sales cycles", "Assuming self-serve scales forever", "Ignoring churn compounding", "Building features before validating willingness-to-pay"
+  - Generate domain+niche-appropriate options dynamically based on project scan and P1b answer.
+
+**Profiling Round 3 — Benchmarks & Success Criteria (1 question):**
+
+Question P5 — "What should the expert benchmark success against?"
+- This defines what "good" looks like in the domain — the expert uses these to evaluate proposals:
+  - "Industry unit economics" — "CAC, LTV, payback period, margins for this vertical"
+  - "Competitor feature parity" — "What do top 3 competitors offer as table stakes?"
+  - "Regulatory compliance bar" — "What's the minimum to operate legally in target markets?"
+  - "User adoption benchmarks" — "Typical activation rates, retention curves, NPS for this category"
+
+#### Building the Profile
+
+After all profiling questions are answered, generate `{output_root}/domain-expert-profile.md` using the template:
+
+1. Map P1a answer → `## Domain` (broad domain)
+2. Map P1b answer (if asked) → refine `## Domain` with sub-specialization, shape `## Key Expertise Areas` to the specific niche, calibrate `## Industry Benchmarks` to niche-appropriate metrics
+3. Map P2 answer → `## Your Persona` (craft the persona to match the chosen perspective AND sub-specialization)
+4. Map P3 answer → `## Common Pitfalls in This Domain` (prioritize the skepticism area)
+5. Map P4 answer → add to `## Common Pitfalls` + `## Industry Frameworks & Standards` (these are now niche-specific thanks to P1b)
+6. Map P5 answer → `## Industry Benchmarks` and `## Competitive Dynamics`
+7. Enrich all sections with findings from the project scan and web research (evidence.json)
+
+**Critical rule:** The generated profile must NOT contain any positive assumptions about the project. The domain expert's job is to stress-test, not validate. The persona should be someone who has "seen projects like this fail" and knows exactly why.
 
 **Round 1 — Initiative & Strategy (3-4 questions max)**
 **Round 2 — Constraints (2-3 questions)**
