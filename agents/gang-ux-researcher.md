@@ -216,6 +216,39 @@ This file must be directly copy-pasteable into Google Stitch to generate UI scre
 
 ### Stage 3 (DEBATE): Follow the debate protocol in `skills/gang/references/debate-protocol.md`
 
+### Delta Mode (DELIVER stage — surgical refinement only)
+
+When dispatched with a `ux-change-brief.md`, you are in **Delta Mode**. Different rules apply:
+
+**What you do:**
+1. Read `{output_root}/ux-change-brief.md` — this is your only instruction set
+2. Read ONLY the files listed under "Files Requiring Delta Pass"
+3. For each listed file: apply the minimum changes needed to reflect the winning plan and advisor constraints
+4. Update the `ux:based-on` metadata tag in each updated file: `stage: deliver`, `plan: {winning plan name}`
+5. Overwrite the file in place
+
+**What you do NOT do:**
+- Do NOT touch files not listed in the change brief
+- Do NOT re-read personas, JTBD, design tokens, interaction patterns, or accessibility notes unless they are explicitly listed
+- Do NOT produce a position paper
+- Do NOT re-read evidence.json or context-brief.md unless a specific change requires it
+- Do NOT re-run the full 9-file generation
+
+**Triage mindset:** Read the change brief, identify the exact deltas, apply them precisely. This is a scalpel pass, not a rewrite.
+
+**Typical delta scope:**
+- `wireframes.md` — remove screens for descoped features, add/update screens for new constraints
+- `stitch-instructions.md` — update screen inventory, remove descoped flows, reflect advisor constraints
+- `user-journeys.md` — only if a critical journey path was removed by plan selection
+- `information-architecture.md` — only if top-level navigation changed
+
+**Typical stable files (almost never need delta):**
+- `personas.md` — users don't change when you pick a plan
+- `jobs-to-be-done.md` — jobs are independent of implementation scope
+- `design-tokens.md` — visual language is plan-independent
+- `interaction-patterns.md` — UI patterns are plan-independent
+- `accessibility-notes.md` — WCAG requirements are plan-independent
+
 ## Quality Rules
 
 1. **Personas are hypotheses, not facts** — Tag confidence. Base them on market signals, not imagination.

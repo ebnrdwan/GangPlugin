@@ -547,7 +547,22 @@ For each **enabled** agent, dispatch using the Agent tool in a SINGLE message (p
 >
 > Also read the debate protocol at `{plugin_root}/skills/gang/references/debate-protocol.md` — you will need it in the next stage.
 >
-> {For gang-ux-researcher only: Also produce all 9 UX deliverable files in `{output_root}/ux-deliverables/`. Read the Impeccable design rules at `{plugin_root}/skills/gang/references/impeccable-design-rules.md` and the Stitch template at `{plugin_root}/skills/gang/references/stitch-prompt-template.md`.}
+> {For gang-ux-researcher only: Also produce all 9 UX deliverable files in `{output_root}/ux-deliverables/`. Read the Impeccable design rules at `{plugin_root}/skills/gang/references/impeccable-design-rules.md` and the Stitch template at `{plugin_root}/skills/gang/references/stitch-prompt-template.md`.
+>
+> **IMPORTANT — tag every deliverable file** with a metadata comment at the very top, before any content:
+>
+> ```
+> <!-- ux:based-on
+>   stage: think
+>   plan: exploratory
+>   assumption_ids: [as-001, as-003]   ← list every assumption this file depends on
+>   scope_signals: [full-feature-set]  ← what scope assumptions are baked in
+>   stable_if: assumption_ids hold + scope unchanged
+> -->
+> ```
+>
+> This tag lets the DELIVER stage identify exactly which files need updating without re-reading all 9.
+> Files like personas.md and jobs-to-be-done.md will almost always be stable. Wireframes and stitch-instructions.md are scope-sensitive and often need a delta pass.}
 >
 > {For gang-domain-expert only: Read your domain profile at `{output_root}/domain-expert-profile.md` and adopt that persona.}
 
@@ -833,9 +848,78 @@ When the user runs `/gang deliver`:
 3. If verdict is **NO-GO**: inform the user. Suggest `/gang reinit` if conditions have changed.
 4. If **GO** or **CONDITIONAL-GO**: proceed.
 
-### Dispatch Deliverables Writer
+### Step 1: UX Delta Check (only when UX Researcher was enabled in THINK)
 
-Use the Agent tool to dispatch `gang-deliverables-writer`:
+Before dispatching the deliverables writer, check whether UX deliverables need refinement.
+
+**1a. Build the UX Change Brief**
+
+Read the `ux:based-on` metadata comment at the top of each file in `{output_root}/ux-deliverables/` (first comment block only — do NOT read full file content). Then read `{output_root}/scored-plans.md`, `{output_root}/executive-brief.md`, and `{output_root}/assumptions.json`.
+
+Generate `{output_root}/ux-change-brief.md`:
+
+```markdown
+# UX Change Brief
+
+## What the Advisor Decided
+- **Winning plan:** {plan name and key characteristics}
+- **Features removed / descoped:** {list}
+- **New constraints from advisor:** {e.g., "mobile-first only", kill switches that remove features}
+- **CONDITIONAL-GO conditions affecting scope:** {any}
+
+## Assumption Outcomes
+| Assumption ID | Text | Outcome | UX Impact |
+|---|---|---|---|
+| as-001 | {text} | ✓ validated / ✗ failed / — unresolved | none / affects wireframes / affects personas |
+
+## Delta Decision per File
+| File | Stable? | Reason |
+|------|---------|--------|
+| personas.md | ✓ stable | User archetypes don't change with plan selection |
+| jobs-to-be-done.md | ✓ stable | Jobs are independent of plan |
+| user-journeys.md | check | Update only if a descoped feature removes a critical flow |
+| information-architecture.md | check | Update if nav items removed |
+| wireframes.md | check | Scope changes affect screen inventory |
+| design-tokens.md | ✓ stable | Tokens are plan-independent |
+| interaction-patterns.md | ✓ stable | Patterns are plan-independent |
+| accessibility-notes.md | ✓ stable | WCAG requirements don't change with plan |
+| stitch-instructions.md | check | Must reflect final feature set exactly |
+
+## Files Requiring Delta Pass
+{list only the files that need updating — typically 1-3 out of 9}
+```
+
+**1b. Decide: delta pass or skip**
+
+- **0 files need updating** → skip UX delta dispatch. Log: "UX deliverables stable — no delta pass needed."
+- **1-3 files need updating** → dispatch UX Researcher in Delta Mode
+- **4+ files need updating** → dispatch UX Researcher in Delta Mode with full context note
+
+**1c. Dispatch UX Researcher in Delta Mode (when needed)**
+
+> You are the UX Researcher returning for a **surgical delta pass** at the DELIVER stage.
+> You already produced the full UX deliverables during THINK. Most of that work is still valid.
+> Your ONLY job is to update the files listed under "Files Requiring Delta Pass" in `{output_root}/ux-change-brief.md`.
+>
+> Read:
+> - `{output_root}/ux-change-brief.md` — what changed and which files need updating
+> - `{output_root}/executive-brief.md` — the final verdict and constraints
+> - `{output_root}/scored-plans.md` — the winning plan
+> - Each file listed under "Files Requiring Delta Pass" (full content)
+>
+> For each file requiring a delta pass:
+> 1. Read the existing file fully
+> 2. Apply only the changes driven by the change brief — do not rewrite sections that remain valid
+> 3. Update the `ux:based-on` metadata tag: set `stage: deliver`, update `plan:` to the winning plan name
+> 4. Overwrite the file in `{output_root}/ux-deliverables/`
+>
+> For files NOT listed: do NOT read them, do NOT touch them.
+> Do NOT produce a position paper. Do NOT re-read evidence.json or context-brief.md unless a specific delta requires it.
+> Be surgical — the goal is minimum tokens, maximum precision.
+
+### Step 2: Dispatch Deliverables Writer
+
+Once the UX delta pass is complete (or skipped), dispatch `gang-deliverables-writer`:
 
 > You are the Deliverables Writer for the Gang business committee. Generate the GO Package.
 >
@@ -848,7 +932,8 @@ Use the Agent tool to dispatch `gang-deliverables-writer`:
 > - `{output_root}/scored-plans.md`
 > - `{output_root}/executive-brief.md`
 > - `{output_root}/domain-expert-profile.md` (if it exists)
-> - All files in `{output_root}/ux-deliverables/`
+> - All files in `{output_root}/ux-deliverables/` (now refined for the winning plan)
+> - `{output_root}/ux-change-brief.md` (if it exists — summarises what UX changed at DELIVER)
 >
 > Generate all 6 documents following your agent instructions. Write to `{output_root}/go-package/`.
 
