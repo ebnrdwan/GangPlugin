@@ -1,8 +1,8 @@
-# Gang Configuration — v1.3.0
+# Gang Configuration — v1.3.1
 # Edit between stages. Changes take effect on the NEXT stage run.
-# Documentation: https://github.com/ebnrdwan/GangPlugin/blob/main/gang/README.md
+# Documentation: https://ebnrdwan.github.io/GangPlugin/deep-dive.html
 
-version: "1.3.0"
+version: "1.3.1"
 
 # ─── Quality Mode Preset ────────────────────────────────────
 # Choosing a mode pre-populates settings below. You can override any setting after.

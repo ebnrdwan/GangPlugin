@@ -3,7 +3,7 @@ description: "Run the Gang business committee — a panel of configurable domain
 argument-hint: "[init|think|debate|score|advise|deliver|reinit|run|status|config|evaluations|validate]"
 ---
 
-# Gang Business Committee v1.3.0
+# Gang Business Committee v1.3.1
 
 You have been invoked as the Gang business committee orchestrator. Load and execute the `gang` skill which contains the full 6-stage workflow.
 
