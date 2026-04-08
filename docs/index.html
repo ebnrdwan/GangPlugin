@@ -933,23 +933,23 @@
                       fbm(p  + 1.9*q   + t * 0.20 + vec2(8.3, 2.8)));
       float f  = fbm(p + 2.4 * r);
 
-      /* ── Colour palette: dark navy → deep teal ── */
+      /* ── Colour palette: navy → teal (lifted ~30% brighter) ── */
       vec3 col = mix(
-        mix( vec3(0.002, 0.006, 0.022),   /* dark navy      */
-             vec3(0.000, 0.078, 0.118),   /* deep teal      */
+        mix( vec3(0.010, 0.018, 0.055),   /* dark navy      */
+             vec3(0.008, 0.110, 0.165),   /* deep teal      */
              clamp(f * 2.1,        0.0, 1.0) ),
-        mix( vec3(0.000, 0.128, 0.168),   /* teal           */
-             vec3(0.000, 0.182, 0.210),   /* cyan           */
+        mix( vec3(0.010, 0.175, 0.225),   /* teal           */
+             vec3(0.010, 0.235, 0.275),   /* cyan           */
              clamp(f * 2.1 - 1.0,  0.0, 1.0) ),
         clamp(f * 1.9 - 0.15, 0.0, 1.0)
       );
 
       /* Subtle caustic shimmer */
       float shimmer = fbm(p * 3.5 + r * 2.0 + t * 0.6);
-      col += vec3(0.0, 0.016, 0.022) * pow(shimmer, 3.0) * 0.9;
+      col += vec3(0.0, 0.022, 0.030) * pow(shimmer, 3.0) * 0.9;
 
-      /* Strong vignette — darken corners */
-      float vig = 1.0 - 0.92 * pow(length(uv - 0.5) * 1.78, 2.0);
+      /* Softened vignette — less crushing of corners */
+      float vig = 1.0 - 0.72 * pow(length(uv - 0.5) * 1.78, 2.0);
       col *= vig;
 
       gl_FragColor = vec4(col, 1.0);
