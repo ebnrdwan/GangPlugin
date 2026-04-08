@@ -14,7 +14,10 @@
       "author": {
         "name": "ebnrdwan"
       },
-      "source": ".",
+      "source": {
+        "type": "github",
+        "repo": "ebnrdwan/GangPlugin"
+      },
       "category": "productivity",
       "keywords": [
         "business-strategy",
