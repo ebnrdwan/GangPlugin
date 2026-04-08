@@ -8,6 +8,14 @@
   <a href="https://ebnrdwan.github.io/GangPlugin/">
     <img src="https://img.shields.io/badge/⚡_Animated_Overview-View_Live-7C3AED?style=for-the-badge" alt="Animated Overview">
   </a>
+  &nbsp;
+  <a href="https://ebnrdwan.github.io/GangPlugin/deep-dive.html">
+    <img src="https://img.shields.io/badge/📖_Full_Documentation-Deep_Dive-6366F1?style=for-the-badge" alt="Full Documentation">
+  </a>
+</p>
+
+<p align="center">
+  🌐 <strong><a href="https://ebnrdwan.github.io/GangPlugin/">ebnrdwan.github.io/GangPlugin</a></strong>
 </p>
 
 <h1 align="center">Gang</h1>
