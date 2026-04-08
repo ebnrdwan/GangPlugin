@@ -15,8 +15,9 @@
         "name": "ebnrdwan"
       },
       "source": {
-        "type": "github",
-        "repo": "ebnrdwan/GangPlugin"
+        "source": "url",
+        "url": "https://github.com/ebnrdwan/GangPlugin.git",
+        "sha": "bf1215d96430ea35950362448297719ef0bde501"
       },
       "category": "productivity",
       "keywords": [
