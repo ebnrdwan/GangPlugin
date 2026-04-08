@@ -14,9 +14,6 @@
   </a>
 </p>
 
-<p align="center">
-  🌐 <strong><a href="https://ebnrdwan.github.io/GangPlugin/">ebnrdwan.github.io/GangPlugin</a></strong>
-</p>
 
 <h1 align="center">Gang</h1>
 <h3 align="center">Configurable Multi-Agent Business Committee for Claude Code</h3>
