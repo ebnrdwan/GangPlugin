@@ -54,11 +54,17 @@
 ## Quick Start
 
 ```bash
-# 1. Install the plugin
-claude plugin install https://github.com/ebnrdwan/GangPlugin
+# 1. Add the marketplace
+claude plugin marketplace add ebnrdwan/GangPlugin
 
-# 2. Run on any project
+# 2. Install the plugin
+claude plugin install gang
+
+# 3. Run on any project
 /gang run
+
+# Update to latest version
+claude plugin marketplace update gang-marketplace
 ```
 
 ---
