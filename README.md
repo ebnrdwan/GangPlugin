@@ -5,12 +5,12 @@
   <img src="https://img.shields.io/badge/features-12-brightgreen?style=for-the-badge" alt="Features">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
   <br><br>
-  <a href="https://ebnrdwan.github.io/GangPlugin/">
-    <img src="https://img.shields.io/badge/⚡_Animated_Overview-View_Live-7C3AED?style=for-the-badge" alt="Animated Overview">
+  <a href="https://ebnrdwan.github.io/GangPlugin/" style="display:inline-block;padding:12px 24px;background:#7C3AED;color:#fff;border-radius:8px;font-weight:bold;text-decoration:none;font-size:15px;">
+    <img src="https://img.shields.io/badge/-%E2%9A%A1%20View%20Live%20Overview-7C3AED?style=flat-square&logoColor=white" height="36" alt="View Live Overview">
   </a>
-  &nbsp;
-  <a href="https://ebnrdwan.github.io/GangPlugin/deep-dive.html">
-    <img src="https://img.shields.io/badge/📖_Full_Documentation-Deep_Dive-6366F1?style=for-the-badge" alt="Full Documentation">
+  &nbsp;&nbsp;
+  <a href="https://ebnrdwan.github.io/GangPlugin/deep-dive.html" style="display:inline-block;padding:12px 24px;background:#6366F1;color:#fff;border-radius:8px;font-weight:bold;text-decoration:none;font-size:15px;">
+    <img src="https://img.shields.io/badge/-%F0%9F%93%96%20Full%20Documentation-6366F1?style=flat-square&logoColor=white" height="36" alt="Full Documentation">
   </a>
 </p>
 
