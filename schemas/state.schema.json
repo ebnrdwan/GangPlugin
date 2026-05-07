@@ -63,7 +63,10 @@
         "pushed_at":        { "type": "string", "format": "date-time" },
         "push_stage":       { "type": "string", "enum": ["advise", "deliver"] },
         "mode":             { "type": "string", "enum": ["project-draft", "issue"],
-                              "description": "project-draft = direct board card; issue = fallback" }
+                              "description": "project-draft = direct board card; issue = fallback" },
+        "card_type":        { "type": "string",
+                              "enum": ["feature", "enhancement", "initiative", "change", "spike"],
+                              "description": "Card skeleton type used for this push" }
       }
     }
   },

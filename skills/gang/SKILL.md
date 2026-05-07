@@ -1072,36 +1072,47 @@ When the user runs `/gang reinit`:
 
 ## Push Command — `/gang push`
 
-Adds Gang evaluation results as a **draft item directly on a GitHub Projects v2 board** — no GitHub Issue is created. This is a single API call (`gh project item-create`) straight onto the board.
+Adds Gang evaluation results as a **draft item directly on a GitHub Projects v2 board**.
+The card uses a type-specific skeleton so every card on the board has consistent,
+required fields for its category.
 
-If no `project_number` is configured (or it is `0`), the command falls back to creating a regular GitHub Issue in the repo instead.
+If no `project_number` is configured (= `0`), falls back to a GitHub Issue.
 
-**Prerequisite:** "advise" must be in `{output_root}/state.json.stages_completed`.
-
-**Requirements:** `gh` CLI installed and authenticated:
-```
-gh auth login --scopes project,repo
-```
+**Prerequisite:** "advise" in `{output_root}/state.json.stages_completed`.
+**Requirements:** `gh` CLI authenticated — `gh auth login --scopes project,repo`
 
 ---
 
 ### Step 0: Check prerequisites
 
 1. Read `{output_root}/state.json`
-2. If "advise" is NOT in `stages_completed` → stop and tell the user to run `/gang advise` first
+2. Verify "advise" is in `stages_completed` — if not, tell the user to run `/gang advise` first
 3. Read `.gang/config.yaml` → load `config.github`
-4. If `config.github.enabled` is `false` → ask the user:
-
-   > "GitHub integration is currently disabled. Enable it to push this evaluation?"
-   >
-   > - "Yes, enable and push" → set `github.enabled: true` in `.gang/config.yaml`, proceed
-   > - "No, cancel" → stop
+4. If `config.github.enabled: false` → ask the user to enable it, then proceed
 
 ---
 
-### Step 1: Extract evaluation data
+### Step 1: Select card type
 
-Read the following files and extract the data listed below.
+If `config.github.default_card_type` is set to a value other than `"ask"`, use that type directly.
+Otherwise present `AskUserQuestion`:
+
+- Header: "What kind of project card should this evaluation become?"
+- Context: "The card type shapes its skeleton — required fields, sections, and labels."
+- Options:
+  - **Feature Request** — `feature` — "New functionality that was evaluated and got GO/CONDITIONAL-GO"
+  - **Enhancement** — `enhancement` — "Improvement to something that already exists"
+  - **Business Initiative** — `initiative` — "Strategic decision with business-level scope"
+  - **Change Request** — `change` — "Modification to existing functionality, process, or configuration"
+  - **Research Spike** — `spike` — "Time-boxed investigation of unvalidated assumptions before committing"
+
+Record the chosen `card_type`.
+
+---
+
+### Step 2: Extract evaluation data
+
+Read the following files:
 
 **From `{output_root}/state.json`:**
 - `evaluation_name`, `evaluation_type`, `session_id`, `stages_completed`
@@ -1109,130 +1120,124 @@ Read the following files and extract the data listed below.
 
 **From `{output_root}/executive-brief.md`:**
 - **Verdict** — `GO`, `CONDITIONAL-GO`, or `NO-GO`
-- **Executive summary** — opening paragraph (3-4 sentences)
-- **Top 3 risks**, **Kill switches**, **Quick wins**
-- **Conditions** — only if verdict is `CONDITIONAL-GO`
+- **Executive summary** — 3-4 sentences
+- **Top 3 risks** — as a list
+- **Kill switches** — as a list (empty if none)
+- **Quick wins** — as a list (empty if none)
+- **Conditions** — numbered list, only if CONDITIONAL-GO
+- **KPIs / Success metrics** — if present
 
 **From `{output_root}/scored-plans.md`:**
-- Scoring table: each dimension, score, confidence; weighted average
+- Each scoring dimension: name, score, confidence, rubric text, justification
+- Weighted average score + confidence
 
-**From `{output_root}/evidence.json`:** count entries → `evidence_count`
-**From `{output_root}/assumptions.json`:** count entries → `assumption_count`
+**From `{output_root}/context-brief.md`:**
+- Problem statement / what is being built
+- Scope (in-scope / out-of-scope items)
 
----
+**From `{output_root}/assumptions.json`:**
+- All entries with `status: unvalidated` → for spike cards
+- Count → `assumption_count`
 
-### Step 2: Compose the card title and body
+**From `{output_root}/evidence.json`:** count → `evidence_count`
 
-**Title format:**
-```
-[Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}
-```
-
-**Verdict badge:**
-- `GO` → `✅ GO`  |  `CONDITIONAL-GO` → `🔸 CONDITIONAL-GO`  |  `NO-GO` → `🚫 NO-GO`
-
-**Card body** (Markdown — GitHub Projects renders it):
-
-```markdown
-## 🧠 Gang Evaluation: {evaluation_name}
-
-> **{verdict_badge}** | Mode: `{quality_mode}` | Cost: ~${cost} | Date: {YYYY-MM-DD}
+**Derive priority from weighted average:**
+- 8.0–10.0 → `🔴 High`
+- 5.0–7.9  → `🟡 Medium`
+- 0.0–4.9  → `🟢 Low`
 
 ---
 
-### 📋 Executive Summary
-{3-4 sentence summary from executive-brief.md}
+### Step 3: Fill the card skeleton
+
+Read `{plugin_root}/skills/gang/references/card-skeletons.md`.
+Locate the skeleton whose **Type ID** matches `card_type`.
+
+Fill every `{placeholder}` using the extracted data:
+
+| Placeholder | Source |
+|-------------|--------|
+| `{evaluation_name}` | state.json |
+| `{verdict_badge}` | executive-brief.md verdict + emoji |
+| `{priority}` | derived from weighted average |
+| `{quality_mode}` | config.yaml mode |
+| `{cost}` | state.json cost.total_estimated_usd |
+| `{YYYY-MM-DD}` | today's date |
+| `{3-4 sentence summary}` | executive-brief.md opening |
+| `{score}/10`, `{conf}%`, `{rubric_text}` | scored-plans.md per dimension |
+| `{avg}/10`, `{avg_conf}%` | scored-plans.md weighted average |
+| `{risk_1/2/3}` | executive-brief.md top 3 risks |
+| `{kill_switches}` | executive-brief.md kill switches |
+| `{quick_wins}` | executive-brief.md quick wins |
+| `{numbered conditions}` | executive-brief.md conditions (CONDITIONAL-GO only) |
+| `{session_id}` | state.json |
+| `{evaluation_type}s/{evaluation_name}/` | state.json (pluralise type: feature→features) |
+| `{agent_count}` | length of state.json active_agents |
+| `{agent_list}` | state.json active_agents comma-joined |
+| `{evidence_count}` | count of evidence.json entries |
+| `{assumption_count}` | count of assumptions.json entries |
+| `{stages_completed_chain}` | state.json stages_completed joined with " → " |
+
+**Spike-specific placeholders:**
+| Placeholder | Source |
+|-------------|--------|
+| `{hypothesis}` | context-brief.md purpose/problem statement |
+| `{Research question N}` | unvalidated assumptions from assumptions.json |
+| `as-{id}` / `{assumption text}` / `{validation plan}` | assumptions.json entries |
+
+**Skeleton fields marked `✏️ Manual`:** leave as-is — the team fills them after the card is created.
+
+Write the filled body to `/tmp/gang-card-{session_id}.md`.
 
 ---
 
-### 🎯 Scores
+### Step 4: Compose title
 
-| Dimension | Score | Confidence |
-|-----------|------:|------------|
-| {dimension} | {score}/10 | {confidence%} |
-| **Weighted Average** | **{avg}/10** | |
+**Title format by type:**
 
----
-
-### ⚠️ Top 3 Risks
-{risk list}
-
----
-
-### 🔴 Kill Switches
-{kill_switches or "_None identified_"}
+| card_type | Title |
+|-----------|-------|
+| `feature` | `[Gang][Feature] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}` |
+| `enhancement` | `[Gang][Enhancement] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}` |
+| `initiative` | `[Gang][Initiative] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}` |
+| `change` | `[Gang][Change] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}` |
+| `spike` | `[Gang][Spike] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}` |
 
 ---
 
-### ✅ Quick Wins
-{quick_wins or "_None listed_"}
-
-{ONLY IF CONDITIONAL-GO:}
----
-
-### 🔸 Conditions for Full GO
-{numbered conditions list}
-{END IF}
-
----
-
-### 🗂 Session Details
-
-| Key | Value |
-|-----|-------|
-| Session ID | `{session_id}` |
-| Evaluation path | `.gang/{evaluation_type}s/{evaluation_name}/` |
-| Quality mode | `{quality_mode}` |
-| Active agents | {count} ({comma list}) |
-| Evidence entries | {evidence_count} |
-| Assumptions tracked | {assumption_count} |
-| Stages completed | {stages joined with " → "} |
-
----
-*Generated by [Gang v1.3.1](https://github.com/ebnrdwan/GangPlugin) · Open Source · MIT License*
-```
-
-Write the body to `/tmp/gang-card-{session_id}.md`.
-
----
-
-### Step 3: Call the sync script
+### Step 5: Call the sync script
 
 ```bash
-SCRIPT="{plugin_root}/scripts/github-project-sync.sh"
-
-bash "$SCRIPT" \
-  --title          "[Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}" \
-  --body-file      "/tmp/gang-card-{session_id}.md"                     \
-  --project-number "{config.github.project_number}"                     \
-  [--owner         "{config.github.owner}"]   # only if explicitly set  \
-  [--milestone     "{config.github.milestone}"]  # only if non-empty
+bash "{plugin_root}/scripts/github-project-sync.sh" \
+  --title          "{card_title}" \
+  --body-file      "/tmp/gang-card-{session_id}.md" \
+  --project-number "{config.github.project_number}" \
+  [--owner         "{config.github.owner}"]   \
+  [--milestone     "{config.github.milestone}"]
 ```
 
-**When `project_number > 0`:** the script calls `gh project item-create` → draft item added directly to the board. No issue is created.
-
-**When `project_number == 0`:** the script falls back to `gh issue create` → a GitHub Issue is created in the repo.
+- `project_number > 0` → `gh project item-create` → draft card direct to board (no issue)
+- `project_number == 0` → `gh issue create` → fallback GitHub Issue
 
 **On non-zero exit:**
 - Exit 2 → tell the user to run `gh auth login --scopes project,repo`
-- Exit 3 → tell the user to set `project_number` in `.gang/config.yaml` or run from a git repo
-- Exit 4 → show raw error; suggest `gh project list --owner {owner}` to verify the project number
+- Exit 3 → tell the user to set `project_number` in `.gang/config.yaml`
+- Exit 4 → show error; suggest `gh project list --owner {owner}`
 
 ---
 
-### Step 4: Update `state.json`
+### Step 6: Update `state.json`
 
-Parse the last line of the script stdout:
-- `PROJECT_ITEM_URL=...` → `mode: project-draft`
-- `ISSUE_URL=...` → `mode: issue`
+Parse the script's final output line (`PROJECT_ITEM_URL=...` or `ISSUE_URL=...`).
 
-Update `{output_root}/state.json`:
+Write to `{output_root}/state.json`:
 ```json
 {
   "github_push": {
     "mode":             "project-draft",
-    "project_item_url": "{url from script}",
-    "pushed_at":        "{ISO-8601 timestamp}",
+    "card_type":        "{card_type}",
+    "project_item_url": "{url}",
+    "pushed_at":        "{ISO-8601}",
     "push_stage":       "advise"
   }
 }
@@ -1240,43 +1245,45 @@ Update `{output_root}/state.json`:
 
 ---
 
-### Step 5: Present results
+### Step 7: Present results
 
 ```
-✓ Added to GitHub Project #N
-  Title:  [Gang] {evaluation_name}: {VERDICT} — {date}
-  Card:   {project_item_url or issue_url}
+✓ Card added to GitHub Project #N
+  Type:   [Gang][{CardType}]
+  Title:  {card_title}
+  Card:   {project_item_url}
+  Fields marked ✏️ Manual need team input before sprint planning.
 ```
 
-If verdict is GO or CONDITIONAL-GO and DELIVER has not been run yet:
-> "Tip: run `/gang deliver` to generate the full GO Package.  
-> After delivery, run `/gang push` again to add a second card with the deliverables list."
+If CONDITIONAL-GO:
+> "This card has **Conditions for Full GO** — resolve them and run `/gang reinit` to refresh the evaluation."
+
+If verdict is GO/CONDITIONAL-GO and DELIVER not yet run:
+> "Run `/gang deliver` to generate the GO Package (BRD, architecture, charter, risk register).  
+> Then run `/gang push` again to add a deliverables card."
 
 ---
 
 ### Auto-push after ADVISE
 
-When `config.github.enabled: true` **and** `config.github.auto_push: true`:
+When `config.github.auto_push: true`: at the end of Stage 5 (ADVISE), after presenting the verdict, ask:
 
-At the END of Stage 5 (ADVISE), after presenting the verdict, ask:
-
-> "Add this evaluation to GitHub Project #N?"
-> - "Yes, add now" → run Steps 1-5 immediately
-> - "No, skip" → user can run `/gang push` manually later
+> "Add to GitHub Project #N as a [{card_type}] card?"
+> - "Yes, add now" → run Steps 1-7
+> - "No, I'll push manually" → skip
 
 ---
 
 ### Re-push after `/gang deliver`
 
-When `config.github.update_on_deliver: true` **and** `state.json.github_push` is populated:
+When `config.github.update_on_deliver: true` AND `state.json.github_push` is populated:
 
-At the END of Stage 6 (DELIVER), automatically run `/gang push` again, creating a new draft card
-on the board. The card title appends `(Delivered)` and the body leads with the deliverables table:
+At the end of Stage 6 (DELIVER), automatically create a **second draft card** on the board.
+Use the same card type. Title: `[Gang][{CardType}] {evaluation_name}: DELIVERED — {date}`.
+Body leads with the deliverables table, then includes the full evaluation body below:
 
 ```markdown
-### 📦 GO Package Generated — {YYYY-MM-DD}
-
-Full deliverables at `.gang/{type}/{name}/go-package/`:
+### 📦 GO Package — {YYYY-MM-DD}
 
 | Document | File |
 |----------|------|
@@ -1288,7 +1295,7 @@ Full deliverables at `.gang/{type}/{name}/go-package/`:
 | API Contracts | `go-package/api-contracts.md` |
 
 ---
-{same full body as the original ADVISE card below}
+{full body from the original card, unchanged}
 ```
 
 

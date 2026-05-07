@@ -199,6 +199,8 @@ github:
   owner: ""             # GitHub org or user owning the project (empty = auto-detect)
   auto_push: false      # true = offer to push automatically after ADVISE completes
   update_on_deliver: true  # true = add a second card after /gang deliver with deliverables
+  default_card_type: "ask" # card type to use without asking:
+                           # "ask" | "feature" | "enhancement" | "initiative" | "change" | "spike"
   # label and milestone only apply when falling back to issue creation (project_number: 0)
   label: "gang-evaluation"
   milestone: ""
