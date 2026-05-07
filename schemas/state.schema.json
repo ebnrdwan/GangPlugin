@@ -54,10 +54,16 @@
       "type": "object",
       "description": "GitHub push state — populated by /gang push",
       "properties": {
-        "issue_url":    { "type": "string", "format": "uri" },
-        "issue_number": { "type": "integer" },
-        "pushed_at":    { "type": "string", "format": "date-time" },
-        "push_stage":   { "type": "string", "enum": ["advise", "deliver"] }
+        "project_item_url": { "type": "string", "format": "uri",
+                              "description": "URL of the draft item on the GitHub Project board" },
+        "issue_url":        { "type": "string", "format": "uri",
+                              "description": "URL of fallback GitHub Issue (when no project number)" },
+        "issue_number":     { "type": "integer",
+                              "description": "Issue number (fallback path only)" },
+        "pushed_at":        { "type": "string", "format": "date-time" },
+        "push_stage":       { "type": "string", "enum": ["advise", "deliver"] },
+        "mode":             { "type": "string", "enum": ["project-draft", "issue"],
+                              "description": "project-draft = direct board card; issue = fallback" }
       }
     }
   },

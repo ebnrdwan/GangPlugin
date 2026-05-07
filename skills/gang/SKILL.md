@@ -1072,13 +1072,15 @@ When the user runs `/gang reinit`:
 
 ## Push Command — `/gang push`
 
-Pushes Gang evaluation results to a GitHub Issue in the current repo, and optionally adds the issue to a GitHub Projects v2 board. The issue gives stakeholders a single, trackable artifact — linked to the evaluation session — that lives alongside normal project work.
+Adds Gang evaluation results as a **draft item directly on a GitHub Projects v2 board** — no GitHub Issue is created. This is a single API call (`gh project item-create`) straight onto the board.
+
+If no `project_number` is configured (or it is `0`), the command falls back to creating a regular GitHub Issue in the repo instead.
 
 **Prerequisite:** "advise" must be in `{output_root}/state.json.stages_completed`.
 
-**Requirements:** `gh` CLI installed and authenticated with `repo` and `project` scopes:
+**Requirements:** `gh` CLI installed and authenticated:
 ```
-gh auth login --scopes repo,project
+gh auth login --scopes project,repo
 ```
 
 ---
@@ -1090,80 +1092,56 @@ gh auth login --scopes repo,project
 3. Read `.gang/config.yaml` → load `config.github`
 4. If `config.github.enabled` is `false` → ask the user:
 
-   > "GitHub integration is currently disabled (`github.enabled: false` in `.gang/config.yaml`).  
-   > Enable it now to push this evaluation?"
+   > "GitHub integration is currently disabled. Enable it to push this evaluation?"
    >
    > - "Yes, enable and push" → set `github.enabled: true` in `.gang/config.yaml`, proceed
    > - "No, cancel" → stop
 
 ---
 
-### Step 1: Check for existing push (re-push after `/gang deliver`)
-
-Read `{output_root}/state.json` for `github_push.issue_number`.
-
-- **If present:** this is an UPDATE — the issue was already created. Use `--issue-number` in the script call later to edit it instead of creating a duplicate.
-- **If absent:** this is a fresh CREATE.
-
----
-
-### Step 2: Extract evaluation data
+### Step 1: Extract evaluation data
 
 Read the following files and extract the data listed below.
 
 **From `{output_root}/state.json`:**
-- `evaluation_name` → the feature/project name (use as issue title component)
-- `evaluation_type` → flat / feature / project
-- `session_id`
-- `stages_completed` → list of completed stages
-- `cost.total_estimated_usd` → total cost so far
-- `active_agents` → list of agent names
+- `evaluation_name`, `evaluation_type`, `session_id`, `stages_completed`
+- `cost.total_estimated_usd`, `active_agents`
 
 **From `{output_root}/executive-brief.md`:**
-- **Verdict** — one of: `GO`, `CONDITIONAL-GO`, `NO-GO`
-- **Executive summary** — the opening paragraph (first 3-4 sentences only)
-- **Top 3 risks** — extract as a bullet list
-- **Kill switches** — extract as a bullet list (if any)
-- **Quick wins** — extract as a bullet list (if any)
-- **Conditions** — extract ONLY if verdict is `CONDITIONAL-GO`
+- **Verdict** — `GO`, `CONDITIONAL-GO`, or `NO-GO`
+- **Executive summary** — opening paragraph (3-4 sentences)
+- **Top 3 risks**, **Kill switches**, **Quick wins**
+- **Conditions** — only if verdict is `CONDITIONAL-GO`
 
 **From `{output_root}/scored-plans.md`:**
-- The scoring table: each dimension, score, and confidence value
-- Weighted average score
+- Scoring table: each dimension, score, confidence; weighted average
 
-**From `{output_root}/evidence.json`:** count the entries → `evidence_count`
-**From `{output_root}/assumptions.json`:** count the entries → `assumption_count`
+**From `{output_root}/evidence.json`:** count entries → `evidence_count`
+**From `{output_root}/assumptions.json`:** count entries → `assumption_count`
 
 ---
 
-### Step 3: Compose the issue title and body
+### Step 2: Compose the card title and body
 
 **Title format:**
 ```
 [Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}
 ```
 
-Examples:
-- `[Gang] stock-signals: CONDITIONAL-GO — 2026-05-07`
-- `[Gang] mobile-dashboard: GO — 2026-05-07`
-- `[Gang] payment-v2: NO-GO — 2026-05-07`
+**Verdict badge:**
+- `GO` → `✅ GO`  |  `CONDITIONAL-GO` → `🔸 CONDITIONAL-GO`  |  `NO-GO` → `🚫 NO-GO`
 
-**Choose the verdict badge:**
-- `GO` → `✅ GO`
-- `CONDITIONAL-GO` → `🔸 CONDITIONAL-GO`
-- `NO-GO` → `🚫 NO-GO`
-
-**Issue body template** (fill every `{…}` placeholder with extracted data):
+**Card body** (Markdown — GitHub Projects renders it):
 
 ```markdown
 ## 🧠 Gang Evaluation: {evaluation_name}
 
-> **{verdict_badge}** &nbsp;|&nbsp; Mode: `{quality_mode}` &nbsp;|&nbsp; Cost: ~${cost} &nbsp;|&nbsp; Date: {YYYY-MM-DD}
+> **{verdict_badge}** | Mode: `{quality_mode}` | Cost: ~${cost} | Date: {YYYY-MM-DD}
 
 ---
 
 ### 📋 Executive Summary
-{executive_summary — 3-4 sentences extracted from executive-brief.md}
+{3-4 sentence summary from executive-brief.md}
 
 ---
 
@@ -1171,33 +1149,30 @@ Examples:
 
 | Dimension | Score | Confidence |
 |-----------|------:|------------|
-{For each scored dimension:}
-| {Dimension name} | {score}/10 | {confidence as %} |
+| {dimension} | {score}/10 | {confidence%} |
 | **Weighted Average** | **{avg}/10** | |
 
 ---
 
 ### ⚠️ Top 3 Risks
-{risk_1}
-{risk_2}
-{risk_3}
+{risk list}
 
 ---
 
 ### 🔴 Kill Switches
-{kill_switches as bullet list, or "_None identified_" if empty}
+{kill_switches or "_None identified_"}
 
 ---
 
 ### ✅ Quick Wins
-{quick_wins as bullet list, or "_None listed_" if empty}
+{quick_wins or "_None listed_"}
 
-{INCLUDE THIS BLOCK ONLY WHEN verdict is CONDITIONAL-GO:}
+{ONLY IF CONDITIONAL-GO:}
 ---
 
 ### 🔸 Conditions for Full GO
-{conditions as numbered list}
-{END CONDITIONAL-GO BLOCK}
+{numbered conditions list}
+{END IF}
 
 ---
 
@@ -1208,118 +1183,100 @@ Examples:
 | Session ID | `{session_id}` |
 | Evaluation path | `.gang/{evaluation_type}s/{evaluation_name}/` |
 | Quality mode | `{quality_mode}` |
-| Active agents | {count of active_agents} ({comma-separated list}) |
+| Active agents | {count} ({comma list}) |
 | Evidence entries | {evidence_count} |
 | Assumptions tracked | {assumption_count} |
-| Stages completed | {stages_completed joined with " → "} |
+| Stages completed | {stages joined with " → "} |
 
 ---
-
 *Generated by [Gang v1.3.1](https://github.com/ebnrdwan/GangPlugin) · Open Source · MIT License*
 ```
 
-Write the composed body to a temp file: `/tmp/gang-issue-{session_id}.md`
+Write the body to `/tmp/gang-card-{session_id}.md`.
 
 ---
 
-### Step 4: Call the sync script
-
-Build the script arguments:
+### Step 3: Call the sync script
 
 ```bash
 SCRIPT="{plugin_root}/scripts/github-project-sync.sh"
-ARGS=(
-  --title     "[Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}"
-  --body-file "/tmp/gang-issue-{session_id}.md"
-  --label     "{config.github.label}"
-)
+
+bash "$SCRIPT" \
+  --title          "[Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}" \
+  --body-file      "/tmp/gang-card-{session_id}.md"                     \
+  --project-number "{config.github.project_number}"                     \
+  [--owner         "{config.github.owner}"]   # only if explicitly set  \
+  [--milestone     "{config.github.milestone}"]  # only if non-empty
 ```
 
-If `config.github.project_number` > 0: append `--project-number {config.github.project_number}`
-If `config.github.milestone` is non-empty: append `--milestone "{config.github.milestone}"`
-If updating (issue_number found in state): append `--issue-number {issue_number}`
+**When `project_number > 0`:** the script calls `gh project item-create` → draft item added directly to the board. No issue is created.
 
-Execute:
-```bash
-bash "$SCRIPT" "${ARGS[@]}"
-```
+**When `project_number == 0`:** the script falls back to `gh issue create` → a GitHub Issue is created in the repo.
 
-On non-zero exit code:
-- Exit code 2 → tell the user to install/authenticate `gh` and show the exact command
-- Exit code 3 → tell the user to run `/gang push` from inside their git repo directory
-- Exit code 4 → show the raw error output
+**On non-zero exit:**
+- Exit 2 → tell the user to run `gh auth login --scopes project,repo`
+- Exit 3 → tell the user to set `project_number` in `.gang/config.yaml` or run from a git repo
+- Exit 4 → show raw error; suggest `gh project list --owner {owner}` to verify the project number
 
 ---
 
-### Step 5: Update `state.json`
+### Step 4: Update `state.json`
 
-Parse the `ISSUE_URL=...` line from the script's stdout.
-
-Extract:
-- `issue_url` — the full URL
-- `issue_number` — the number at the end of the URL
+Parse the last line of the script stdout:
+- `PROJECT_ITEM_URL=...` → `mode: project-draft`
+- `ISSUE_URL=...` → `mode: issue`
 
 Update `{output_root}/state.json`:
 ```json
 {
   "github_push": {
-    "issue_url":    "{issue_url}",
-    "issue_number": {issue_number},
-    "pushed_at":    "{ISO-8601 timestamp}",
-    "push_stage":   "{current stage: advise or deliver}"
+    "mode":             "project-draft",
+    "project_item_url": "{url from script}",
+    "pushed_at":        "{ISO-8601 timestamp}",
+    "push_stage":       "advise"
   }
 }
 ```
 
 ---
 
-### Step 6: Present results
-
-Show a short confirmation:
+### Step 5: Present results
 
 ```
-✓ GitHub Issue created
-  Title:   [Gang] {evaluation_name}: {VERDICT} — {date}
-  URL:     {issue_url}
-  Project: {#project_number or "none"}
-
-Stakeholders can track this evaluation at: {issue_url}
+✓ Added to GitHub Project #N
+  Title:  [Gang] {evaluation_name}: {VERDICT} — {date}
+  Card:   {project_item_url or issue_url}
 ```
 
-If verdict is GO or CONDITIONAL-GO and `/gang deliver` has NOT been run yet:
-> "Tip: Run `/gang deliver` to generate the full GO Package (BRD, architecture, charter, risk register).  
-> After delivery, run `/gang push` again to update the issue with the final deliverables."
+If verdict is GO or CONDITIONAL-GO and DELIVER has not been run yet:
+> "Tip: run `/gang deliver` to generate the full GO Package.  
+> After delivery, run `/gang push` again to add a second card with the deliverables list."
 
 ---
 
 ### Auto-push after ADVISE
 
-When `config.github.enabled: true` AND `config.github.auto_push: true`:
+When `config.github.enabled: true` **and** `config.github.auto_push: true`:
 
-At the END of Stage 5 (ADVISE) — after presenting the verdict — ask the user:
+At the END of Stage 5 (ADVISE), after presenting the verdict, ask:
 
-> "Push this evaluation to GitHub Issues?"
->
-> - "Yes, push now" → run the `/gang push` flow immediately (Steps 2-6 above)
-> - "No, skip" → skip (user can run `/gang push` manually later)
-
-This prompt appears AFTER the verdict is presented, not before.
+> "Add this evaluation to GitHub Project #N?"
+> - "Yes, add now" → run Steps 1-5 immediately
+> - "No, skip" → user can run `/gang push` manually later
 
 ---
 
-### Update on `/gang deliver`
+### Re-push after `/gang deliver`
 
-When `config.github.update_on_deliver: true` AND `state.json.github_push.issue_number` is set:
+When `config.github.update_on_deliver: true` **and** `state.json.github_push` is populated:
 
-At the END of Stage 6 (DELIVER) — after the GO Package is confirmed — automatically re-run `/gang push` in UPDATE mode (using `--issue-number`) to append a deliver notice to the issue:
+At the END of Stage 6 (DELIVER), automatically run `/gang push` again, creating a new draft card
+on the board. The card title appends `(Delivered)` and the body leads with the deliverables table:
 
-Append to the issue body:
 ```markdown
----
-
 ### 📦 GO Package Generated — {YYYY-MM-DD}
 
-The full deliverables package has been generated at `.gang/{type}/{name}/go-package/`:
+Full deliverables at `.gang/{type}/{name}/go-package/`:
 
 | Document | File |
 |----------|------|
@@ -1330,8 +1287,10 @@ The full deliverables package has been generated at `.gang/{type}/{name}/go-pack
 | Data Model | `go-package/data-model.md` |
 | API Contracts | `go-package/api-contracts.md` |
 
-*Updated by Gang v1.3.1 after /gang deliver*
+---
+{same full body as the original ADVISE card below}
 ```
+
 
 ## Error Handling
 

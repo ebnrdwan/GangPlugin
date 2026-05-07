@@ -182,21 +182,26 @@ telemetry:
   learnings_dir: .gang/learnings    # global, not per-evaluation
 
 # ─── GitHub Integration ─────────────────────────────────────
-# Pushes Gang evaluation results to a GitHub Issue and optionally
-# adds the issue to a GitHub Projects v2 board.
+# Adds Gang evaluation results as a DRAFT ITEM directly on a
+# GitHub Projects v2 board — no GitHub Issue is created.
 #
 # Requires: gh CLI (https://cli.github.com) authenticated with
-#           repo + project scopes.  Run from inside your git repo.
+#           project + repo scopes:
+#             gh auth login --scopes project,repo
 #
 # Run /gang push after any completed ADVISE (or DELIVER) stage.
 # Set auto_push: true to be prompted automatically after ADVISE.
 github:
   enabled: false
-  project_number: 0          # GitHub Project board number (0 = no project, issue only)
-  label: "gang-evaluation"   # Label applied to created issues (auto-created if missing)
-  milestone: ""              # Optional milestone name to attach the issue to
-  auto_push: false           # true = offer to push automatically after ADVISE completes
-  update_on_deliver: true    # true = update the existing issue when /gang deliver runs
+  project_number: 0     # GitHub Project board number — REQUIRED for direct board card
+                        # Find it: gh project list --owner <you-or-your-org>
+                        # (0 = no project → falls back to creating a GitHub Issue)
+  owner: ""             # GitHub org or user owning the project (empty = auto-detect)
+  auto_push: false      # true = offer to push automatically after ADVISE completes
+  update_on_deliver: true  # true = add a second card after /gang deliver with deliverables
+  # label and milestone only apply when falling back to issue creation (project_number: 0)
+  label: "gang-evaluation"
+  milestone: ""
 
 # ─── Mode Presets (reference only — selecting a mode pre-populates above) ───
 modes:
