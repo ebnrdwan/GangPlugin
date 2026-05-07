@@ -1266,6 +1266,24 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
   - Example: `https://github.com/ebnrdwan/GangPlugin/blob/main/.gang/go-package`
 - If `REPO_URL` is empty (not a git repo or no remote): set `{go_package_base_url}` = `""` (fallback to plain paths)
 
+**Detect assignee, priority label, and size:**
+
+```bash
+ASSIGNEE=$(gh api user -q .login 2>/dev/null || true)
+```
+
+- `{assignee}` = the GitHub username above (empty string if gh not available)
+
+Derive `{priority_label}` from the weighted average score used for `{priority}`:
+- 🔴 High (8.0–10.0) → `P1`
+- 🟡 Medium (5.0–7.9) → `P2`
+- 🟢 Low (0.0–4.9)   → `P2`
+
+Derive `{size_label}` from `config.yaml` quality mode:
+- `quick_scout`      → `S`
+- `product_review`   → `M`
+- `investment_grade` → `L`
+
 **Derive priority from weighted average:**
 - 8.0–10.0 → `🔴 High`
 - 5.0–7.9  → `🟡 Medium`
@@ -1309,6 +1327,13 @@ Fill every `{placeholder}` using the extracted data:
 | `{hypothesis}` | context-brief.md purpose/problem statement |
 | `{Research question N}` | unvalidated assumptions from assumptions.json |
 | `as-{id}` / `{assumption text}` / `{validation plan}` | assumptions.json entries |
+
+**Project field placeholders:**
+| Placeholder | Source |
+|-------------|--------|
+| `{assignee}` | `gh api user -q .login` — GitHub username of current user |
+| `{priority_label}` | Mapped from weighted average: 🔴→P1, 🟡/🟢→P2 |
+| `{size_label}` | Mapped from quality mode: quick_scout→S, product_review→M, investment_grade→L |
 
 **GO Package placeholders (only when "deliver" is in `stages_completed`):**
 | Placeholder | Source |
@@ -1372,13 +1397,18 @@ For each board in `TARGET_BOARDS`:
 
 ```bash
 bash "{plugin_root}/scripts/github-project-sync.sh" \
-  --title          "{card_title}" \
-  --body-file      "/tmp/gang-card-{session_id}.md" \
-  --project-number "{board.project_number}" \
-  --owner          "{board.owner}" \
+  --title          "{card_title}"                      \
+  --body-file      "/tmp/gang-card-{session_id}.md"    \
+  --project-number "{board.project_number}"            \
+  --owner          "{board.owner}"                     \
+  --assignee       "{assignee}"                        \
+  --priority       "{priority_label}"                  \
+  --size           "{size_label}"                      \
   [--label         "{config.github.fallback_label}"]   \
   [--milestone     "{config.github.fallback_milestone}"]
 ```
+
+Omit `--assignee`/`--priority`/`--size` if their values are empty strings.
 
 - `project_number > 0` → `gh project item-create` → draft card direct to board (no issue)
 - `project_number == 0` → `gh issue create` → fallback GitHub Issue
