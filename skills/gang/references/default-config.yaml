@@ -182,29 +182,40 @@ telemetry:
   learnings_dir: .gang/learnings    # global, not per-evaluation
 
 # ─── GitHub Integration ─────────────────────────────────────
-# Adds Gang evaluation results as a DRAFT ITEM directly on a
-# GitHub Projects v2 board — no GitHub Issue is created.
+# Gang can push each evaluation result as a draft item directly
+# onto one or more GitHub Projects v2 boards.
 #
-# Requires: gh CLI (https://cli.github.com) authenticated with
-#           project + repo scopes:
-#             gh auth login --scopes project,repo
+# Configured automatically during /gang init if gh CLI is available.
+# Edit this block any time to add/remove projects or change defaults.
 #
-# Run /gang push after any completed ADVISE (or DELIVER) stage.
-# Set auto_push: true to be prompted automatically after ADVISE.
+# Requires: gh CLI authenticated — gh auth login --scopes project,repo
+#
 github:
   enabled: false
-  project_number: 0     # GitHub Project board number — REQUIRED for direct board card
-                        # Find it: gh project list --owner <you-or-your-org>
-                        # (0 = no project → falls back to creating a GitHub Issue)
-  owner: ""             # GitHub org or user owning the project (empty = auto-detect)
-  auto_push: false      # true = offer to push automatically after ADVISE completes
-  update_on_deliver: true  # true = add a second card after /gang deliver with deliverables
-  default_card_type: "ask" # card type to use without asking:
-                           # "ask" | "feature" | "enhancement" | "initiative" | "change" | "spike"
-  # label and milestone only apply when falling back to issue creation (project_number: 0)
-  label: "gang-evaluation"
-  milestone: ""
 
+  # List of GitHub Project boards to push to.
+  # Add multiple entries to push to several boards simultaneously.
+  # Run `gh project list --owner <you>` to find project numbers.
+  projects:
+    - owner: ""            # GitHub user or org that owns the project
+      project_number: 0    # Number shown in the project URL
+      name: ""             # Friendly label shown in Gang UI (e.g. "Roadmap Q2")
+
+  # Card type used without prompting.
+  # "ask"  = Gang always asks at /gang push time (default)
+  # Or one of: feature | enhancement | initiative | change | spike
+  default_card_type: "ask"
+
+  # Prompt to push automatically right after /gang advise completes.
+  auto_push: false
+
+  # After /gang deliver, add a second "DELIVERED" card to the same board(s).
+  update_on_deliver: true
+
+  # Fallback settings — only used when projects list is empty
+  # (falls back to creating a GitHub Issue in the repo instead)
+  fallback_label: "gang-evaluation"
+  fallback_milestone: ""
 # ─── Mode Presets (reference only — selecting a mode pre-populates above) ───
 modes:
   quick_scout:

@@ -203,6 +203,112 @@ Based on selection:
 - **Project:** Ask for a slug name → run `bash {plugin_root}/scripts/init-gang.sh --type project --name {slug}`
 - **Flat:** Run `bash {plugin_root}/scripts/init-gang.sh --type flat`
 
+### Step 1b: GitHub Projects Setup (optional — skip if gh CLI unavailable)
+
+**Purpose:** Wire up one or more GitHub Project boards so `/gang push` can send evaluation results directly to the team's board — no manual config editing required.
+
+**1b-1. Check prerequisites (silent, no user output):**
+```bash
+command -v gh &>/dev/null && gh auth status &>/dev/null
+```
+- If `gh` is missing or not authenticated: **skip this entire step silently**. Note in `state.json` that GitHub setup was skipped.
+- If authenticated: proceed.
+
+**1b-2. Detect owner:**
+```bash
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)
+OWNER="${REPO%%/*}"           # extract org or user from "org/repo"
+[[ -z "$OWNER" ]] && OWNER=$(gh api user -q .login)
+```
+
+**1b-3. Discover available projects:**
+```bash
+gh project list --owner "$OWNER" --format json
+```
+Parse the JSON array. Each entry has: `number`, `title`, `url`.
+
+If the command returns an empty list or fails (missing `project` scope):
+- Inform the user:
+  ```
+  ⚠️  GitHub Project boards could not be listed.
+  Run:  gh auth refresh --scopes project
+  Then re-run /gang init or edit .gang/config.yaml manually.
+  ```
+- Set `config.github.enabled: false` and skip the rest of this step.
+
+**1b-4. Present board selection (`AskUserQuestion`):**
+
+Header: "Connect GitHub Project boards"
+Body:
+```
+Found {N} project board(s) for @{owner}:
+
+  {number}. {title}
+  (repeat for each)
+
+Which boards should Gang push evaluation results to?
+(You can add more later by editing .gang/config.yaml)
+```
+Options:
+- One option per discovered board: `"#{number} — {title}"`
+- `"None — skip GitHub integration"`
+
+Allow **multi-select** (user can pick several boards).
+
+If the user selects "None" → set `config.github.enabled: false` and skip 1b-5/6.
+
+**1b-5. Ask card type preference:**
+
+```
+When pushing an evaluation, which card type should Gang use by default?
+```
+Options:
+- `"Ask me each time"` → `default_card_type: "ask"`
+- `"Feature"` → `default_card_type: "feature"`
+- `"Enhancement"` → `default_card_type: "enhancement"`
+- `"Initiative"` → `default_card_type: "initiative"`
+- `"Change Request"` → `default_card_type: "change"`
+- `"Research Spike"` → `default_card_type: "spike"`
+
+**1b-6. Ask auto-push preference:**
+
+```
+Auto-push to the project board right after /gang advise completes?
+```
+Options:
+- `"Yes — push automatically after advise"` → `auto_push: true`
+- `"No — I'll run /gang push manually"` → `auto_push: false`
+
+**1b-7. Write results to `.gang/config.yaml`:**
+
+Update the `github:` block:
+```yaml
+github:
+  enabled: true
+  projects:
+    - owner: "{owner}"
+      project_number: {number1}
+      name: "{title1}"
+    - owner: "{owner}"                # repeat for each selected board
+      project_number: {number2}
+      name: "{title2}"
+  default_card_type: "{selection}"
+  auto_push: {true|false}
+  update_on_deliver: true
+  fallback_label: "gang-evaluation"
+  fallback_milestone: ""
+```
+
+Confirm to the user:
+```
+✓ GitHub integration configured
+  Boards: {board1_title}, {board2_title}
+  Card type: {default_card_type}
+  Auto-push after advise: {yes/no}
+
+  Edit any time: .gang/config.yaml → github block
+```
+
 ### Step 2: Deep Project Scan
 
 This is NOT a quick check — it's a thorough understanding of the entire project.
@@ -1072,11 +1178,11 @@ When the user runs `/gang reinit`:
 
 ## Push Command — `/gang push`
 
-Adds Gang evaluation results as a **draft item directly on a GitHub Projects v2 board**.
+Adds Gang evaluation results as **draft item(s) directly on GitHub Projects v2 board(s)**.
 The card uses a type-specific skeleton so every card on the board has consistent,
-required fields for its category.
+required fields for its category. Multiple boards can be configured in `config.github.projects`.
 
-If no `project_number` is configured (= `0`), falls back to a GitHub Issue.
+If no project boards are configured (all entries have `project_number: 0`), falls back to a GitHub Issue.
 
 **Prerequisite:** "advise" in `{output_root}/state.json.stages_completed`.
 **Requirements:** `gh` CLI authenticated — `gh auth login --scopes project,repo`
@@ -1088,7 +1194,14 @@ If no `project_number` is configured (= `0`), falls back to a GitHub Issue.
 1. Read `{output_root}/state.json`
 2. Verify "advise" is in `stages_completed` — if not, tell the user to run `/gang advise` first
 3. Read `.gang/config.yaml` → load `config.github`
-4. If `config.github.enabled: false` → ask the user to enable it, then proceed
+4. If `config.github.enabled: false` → inform the user:
+   ```
+   GitHub integration is disabled in .gang/config.yaml.
+   Set github.enabled: true to use /gang push.
+   Run /gang init to reconfigure, or edit .gang/config.yaml directly.
+   ```
+   Ask: "Enable it now and continue?" — if yes, set `enabled: true` in config then proceed
+5. Verify `config.github.projects` array exists and has at least one entry — if empty, suggest running `/gang init` to configure boards
 
 ---
 
@@ -1205,38 +1318,68 @@ Write the filled body to `/tmp/gang-card-{session_id}.md`.
 
 ---
 
-### Step 5: Call the sync script
+### Step 5: Select target boards
+
+Load `config.github.projects` (the array from `.gang/config.yaml`).
+
+**If the array has exactly 1 entry:**
+- Use that board directly. No question needed.
+- `TARGET_BOARDS = [ {the single entry} ]`
+
+**If the array has 2 or more entries:**
+Present `AskUserQuestion` — multi-select:
+
+- Header: "Push to which project board(s)?"
+- Options: one per configured board: `"#{number} — {name}"`
+- Option: `"All boards"` — push to every configured board
+
+`TARGET_BOARDS = [ selected boards ]`
+
+**If the array is empty or all entries have `project_number: 0`:**
+- Inform the user: "No project boards configured. Falling back to a GitHub Issue."
+- `TARGET_BOARDS = [ { project_number: 0, fallback: true } ]`
+
+---
+
+### Step 6: Call the sync script (once per target board)
+
+For each board in `TARGET_BOARDS`:
 
 ```bash
 bash "{plugin_root}/scripts/github-project-sync.sh" \
   --title          "{card_title}" \
   --body-file      "/tmp/gang-card-{session_id}.md" \
-  --project-number "{config.github.project_number}" \
-  [--owner         "{config.github.owner}"]   \
-  [--milestone     "{config.github.milestone}"]
+  --project-number "{board.project_number}" \
+  --owner          "{board.owner}" \
+  [--label         "{config.github.fallback_label}"]   \
+  [--milestone     "{config.github.fallback_milestone}"]
 ```
 
 - `project_number > 0` → `gh project item-create` → draft card direct to board (no issue)
 - `project_number == 0` → `gh issue create` → fallback GitHub Issue
 
-**On non-zero exit:**
-- Exit 2 → tell the user to run `gh auth login --scopes project,repo`
-- Exit 3 → tell the user to set `project_number` in `.gang/config.yaml`
-- Exit 4 → show error; suggest `gh project list --owner {owner}`
+**On non-zero exit for any board:**
+- Exit 2 → tell the user: `gh auth refresh --scopes project` then retry
+- Exit 3 → tell the user to add a `project_number` to `.gang/config.yaml` or run from a GitHub repo directory
+- Exit 4 → show the raw error; suggest `gh project list --owner {board.owner}`
+
+Collect all results: `{ board_name, mode, url }` per board.
 
 ---
 
-### Step 6: Update `state.json`
+### Step 7: Update `state.json`
 
-Parse the script's final output line (`PROJECT_ITEM_URL=...` or `ISSUE_URL=...`).
+Parse each script's final output line (`PROJECT_ITEM_URL=...` or `ISSUE_URL=...`).
 
-Write to `{output_root}/state.json`:
+Write to `{output_root}/state.json` (record the **first** successful project-draft URL; issue URL as fallback):
+
 ```json
 {
   "github_push": {
     "mode":             "project-draft",
     "card_type":        "{card_type}",
-    "project_item_url": "{url}",
+    "project_item_url": "{url of first project-draft board}",
+    "issue_url":        "{url if fallback issue was created}",
     "pushed_at":        "{ISO-8601}",
     "push_stage":       "advise"
   }
@@ -1245,13 +1388,25 @@ Write to `{output_root}/state.json`:
 
 ---
 
-### Step 7: Present results
+### Step 8: Present results
+
+For each board result collected in Step 6, print one line:
 
 ```
-✓ Card added to GitHub Project #N
+✓ Card added to "{board_name}" (Project #{number})
+  {project_item_url}
+```
+
+Or if fallback issue:
+```
+✓ Issue created (no project configured)
+  {issue_url}
+```
+
+Then print a summary footer:
+```
   Type:   [Gang][{CardType}]
   Title:  {card_title}
-  Card:   {project_item_url}
   Fields marked ✏️ Manual need team input before sprint planning.
 ```
 
@@ -1268,9 +1423,9 @@ If verdict is GO/CONDITIONAL-GO and DELIVER not yet run:
 
 When `config.github.auto_push: true`: at the end of Stage 5 (ADVISE), after presenting the verdict, ask:
 
-> "Add to GitHub Project #N as a [{card_type}] card?"
-> - "Yes, add now" → run Steps 1-7
-> - "No, I'll push manually" → skip
+> "Push this evaluation to your configured GitHub Project board(s) now?"
+> - "Yes, push now" → run Steps 1-8 (skipping card type question if `default_card_type` is set)
+> - "No, I'll push manually with `/gang push`" → skip
 
 ---
 
@@ -1278,7 +1433,7 @@ When `config.github.auto_push: true`: at the end of Stage 5 (ADVISE), after pres
 
 When `config.github.update_on_deliver: true` AND `state.json.github_push` is populated:
 
-At the end of Stage 6 (DELIVER), automatically create a **second draft card** on the board.
+At the end of Stage 6 (DELIVER), automatically create a **second draft card** on **every board that received the original push** (use `config.github.projects` with the same `TARGET_BOARDS` from the original push, or all boards if original push is unknown).
 Use the same card type. Title: `[Gang][{CardType}] {evaluation_name}: DELIVERED — {date}`.
 Body leads with the deliverables table, then includes the full evaluation body below:
 
