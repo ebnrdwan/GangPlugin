@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gang Plugin v1.3.0 — Multi-Agent Business Committee</title>
+  <title>Gang Plugin v1.3.2 — Multi-Agent Business Committee</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -513,7 +513,7 @@
 
 <!-- ── HERO ── -->
 <header class="hero">
-  <div class="hero__badge">⚡ v1.3.0 &nbsp;·&nbsp; Configurable &nbsp;·&nbsp; Auditable &nbsp;·&nbsp; Cost-Aware</div>
+  <div class="hero__badge">⚡ v1.3.2 &nbsp;·&nbsp; Configurable &nbsp;·&nbsp; Auditable &nbsp;·&nbsp; Cost-Aware</div>
   <h1 class="hero__title">Gang</h1>
   <p class="hero__subtitle">Configurable Multi-Agent Business Committee for Claude Code.<br>One command. Expert analysis. Evidence-backed verdict.</p>
   <code class="hero__cmd">/gang run</code>
@@ -755,7 +755,7 @@
 
 <!-- ── FEATURES ── -->
 <div class="wrap">
-  <p class="sec-label">v1.3.0 Features</p>
+  <p class="sec-label">v1.3.2 Features</p>
   <div class="features-grid">
     <div class="feature-card">
       <div class="feature-icon">⚙️</div>
@@ -834,6 +834,27 @@
         <div class="feature-desc">Quick Scout (~$1) · Product Review (~$5) · Investment Grade (~$20). Selected at /gang init, writes full config.</div>
       </div>
     </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗂️</div>
+      <div>
+        <div class="feature-title">GitHub Projects Integration</div>
+        <div class="feature-desc">Push evaluation results as draft cards directly onto GitHub Projects v2 boards — no issue created. Auto-discovers boards at /gang init.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🃏</div>
+      <div>
+        <div class="feature-title">Typed Card Skeletons</div>
+        <div class="feature-desc">5 card types: Feature · Enhancement · Initiative · Change · Spike. Each with structured required fields, impact tables, and priority auto-derived from scores.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏢</div>
+      <div>
+        <div class="feature-title">Multi-Board Push</div>
+        <div class="feature-desc">Configure multiple project boards in config.yaml. Push to one or all boards at once. Auto-push after advise, re-push with GO Package after deliver.</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -842,12 +863,13 @@
   <p class="sec-label">Commands</p>
   <div class="commands-grid">
     <div class="cmd-row"><code class="cmd-code">/gang run</code><span class="cmd-desc">Run full pipeline end-to-end</span></div>
-    <div class="cmd-row"><code class="cmd-code">/gang init</code><span class="cmd-desc">Scan project, select quality mode, populate evidence</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang init</code><span class="cmd-desc">Scan project, select quality mode, populate evidence + set up GitHub boards</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang think</code><span class="cmd-desc">Committee setup + parallel expert analysis</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang debate</code><span class="cmd-desc">Configurable cross-review debate</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang score</code><span class="cmd-desc">Rubric-anchored plan synthesis and scoring</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang advise</code><span class="cmd-desc">CEO/CTO advisory with guardrails</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang deliver</code><span class="cmd-desc">Generate GO Package (requires GO/CONDITIONAL-GO)</span></div>
+    <div class="cmd-row"><code class="cmd-code">/gang push</code><span class="cmd-desc">Push evaluation as a typed card to GitHub Projects board(s)</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang status</code><span class="cmd-desc">Show progress, committee, cost, validation</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang config</code><span class="cmd-desc">Show or edit configuration</span></div>
     <div class="cmd-row"><code class="cmd-code">/gang validate</code><span class="cmd-desc">Run validation checks on all artifacts</span></div>
@@ -868,7 +890,7 @@
       📖 Full Documentation
     </a>
   </div>
-  <p class="footer-version">Gang Plugin v1.3.0 · MIT License · Built for Claude Code</p>
+  <p class="footer-version">Gang Plugin v1.3.2 · MIT License · Built for Claude Code</p>
 </footer>
 
 
