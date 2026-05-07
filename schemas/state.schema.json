@@ -49,7 +49,17 @@
       }
     },
     "reinit_count": { "type": "integer" },
-    "last_reinit": { "type": ["string", "null"] }
+    "last_reinit": { "type": ["string", "null"] },
+    "github_push": {
+      "type": "object",
+      "description": "GitHub push state — populated by /gang push",
+      "properties": {
+        "issue_url":    { "type": "string", "format": "uri" },
+        "issue_number": { "type": "integer" },
+        "pushed_at":    { "type": "string", "format": "date-time" },
+        "push_stage":   { "type": "string", "enum": ["advise", "deliver"] }
+      }
+    }
   },
   "additionalProperties": true
 }

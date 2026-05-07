@@ -1,6 +1,6 @@
 ---
-description: "Run the Gang business committee — a panel of configurable domain experts that evaluates product ideas through structured debate, produces evidence-backed scored strategic plans, and delivers an executive Go/No-Go recommendation with advisor guardrails. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status, config, evaluations, validate."
-argument-hint: "[init|think|debate|score|advise|deliver|reinit|run|status|config|evaluations|validate]"
+description: "Run the Gang business committee — a panel of configurable domain experts that evaluates product ideas through structured debate, produces evidence-backed scored strategic plans, and delivers an executive Go/No-Go recommendation with advisor guardrails. Subcommands: init, think, debate, score, advise, deliver, reinit, run, push, status, config, evaluations, validate."
+argument-hint: "[init|think|debate|score|advise|deliver|reinit|run|push|status|config|evaluations|validate]"
 ---
 
 # Gang Business Committee v1.3.1
@@ -19,6 +19,7 @@ Parse the arguments provided by the user:
 - **`advise`:** Stage 5 — CEO/CTO advisory with guardrails (auto-conditional-GO on unvalidated assumptions)
 - **`deliver`:** Stage 6 — generate GO Package (BRD, architecture, charter, risk register, data model, API contracts) — requires GO/CONDITIONAL-GO
 - **`reinit`:** Re-run INIT on existing session — refreshes context, re-populates evidence, resets downstream stages
+- **`push`:** Push evaluation results to a GitHub Issue and optionally a GitHub Projects board — requires ADVISE to be complete
 - **`status`:** Show committee roster, stage progress, cost tracking, validation status
 - **`config`:** Show or edit `.gang/config.yaml` settings
 - **`evaluations`:** List all feature and project evaluations with their status

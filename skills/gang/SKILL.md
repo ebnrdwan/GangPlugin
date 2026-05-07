@@ -31,6 +31,7 @@ Parse the user's command to determine which stage(s) to run:
 | `/gang advise` | Stage 5 only — CEO/CTO advisory with guardrails |
 | `/gang deliver` | Stage 6 — generate GO Package (requires GO/CONDITIONAL-GO) |
 | `/gang reinit` | Re-run INIT on existing session — refreshes context, resets downstream |
+| `/gang push`   | Push evaluation results to a GitHub Issue + GitHub Project card |
 | `/gang status` | Show current progress, committee roster, cost, validation |
 | `/gang config` | Show or edit `.gang/config.yaml` |
 | `/gang evaluations` | List all evaluations (features + projects) |
@@ -1065,6 +1066,272 @@ When the user runs `/gang reinit`:
 6. **Inform:** "Context refreshed. Downstream stages reset. Run `/gang think` to continue."
 
 ---
+
+
+---
+
+## Push Command — `/gang push`
+
+Pushes Gang evaluation results to a GitHub Issue in the current repo, and optionally adds the issue to a GitHub Projects v2 board. The issue gives stakeholders a single, trackable artifact — linked to the evaluation session — that lives alongside normal project work.
+
+**Prerequisite:** "advise" must be in `{output_root}/state.json.stages_completed`.
+
+**Requirements:** `gh` CLI installed and authenticated with `repo` and `project` scopes:
+```
+gh auth login --scopes repo,project
+```
+
+---
+
+### Step 0: Check prerequisites
+
+1. Read `{output_root}/state.json`
+2. If "advise" is NOT in `stages_completed` → stop and tell the user to run `/gang advise` first
+3. Read `.gang/config.yaml` → load `config.github`
+4. If `config.github.enabled` is `false` → ask the user:
+
+   > "GitHub integration is currently disabled (`github.enabled: false` in `.gang/config.yaml`).  
+   > Enable it now to push this evaluation?"
+   >
+   > - "Yes, enable and push" → set `github.enabled: true` in `.gang/config.yaml`, proceed
+   > - "No, cancel" → stop
+
+---
+
+### Step 1: Check for existing push (re-push after `/gang deliver`)
+
+Read `{output_root}/state.json` for `github_push.issue_number`.
+
+- **If present:** this is an UPDATE — the issue was already created. Use `--issue-number` in the script call later to edit it instead of creating a duplicate.
+- **If absent:** this is a fresh CREATE.
+
+---
+
+### Step 2: Extract evaluation data
+
+Read the following files and extract the data listed below.
+
+**From `{output_root}/state.json`:**
+- `evaluation_name` → the feature/project name (use as issue title component)
+- `evaluation_type` → flat / feature / project
+- `session_id`
+- `stages_completed` → list of completed stages
+- `cost.total_estimated_usd` → total cost so far
+- `active_agents` → list of agent names
+
+**From `{output_root}/executive-brief.md`:**
+- **Verdict** — one of: `GO`, `CONDITIONAL-GO`, `NO-GO`
+- **Executive summary** — the opening paragraph (first 3-4 sentences only)
+- **Top 3 risks** — extract as a bullet list
+- **Kill switches** — extract as a bullet list (if any)
+- **Quick wins** — extract as a bullet list (if any)
+- **Conditions** — extract ONLY if verdict is `CONDITIONAL-GO`
+
+**From `{output_root}/scored-plans.md`:**
+- The scoring table: each dimension, score, and confidence value
+- Weighted average score
+
+**From `{output_root}/evidence.json`:** count the entries → `evidence_count`
+**From `{output_root}/assumptions.json`:** count the entries → `assumption_count`
+
+---
+
+### Step 3: Compose the issue title and body
+
+**Title format:**
+```
+[Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}
+```
+
+Examples:
+- `[Gang] stock-signals: CONDITIONAL-GO — 2026-05-07`
+- `[Gang] mobile-dashboard: GO — 2026-05-07`
+- `[Gang] payment-v2: NO-GO — 2026-05-07`
+
+**Choose the verdict badge:**
+- `GO` → `✅ GO`
+- `CONDITIONAL-GO` → `🔸 CONDITIONAL-GO`
+- `NO-GO` → `🚫 NO-GO`
+
+**Issue body template** (fill every `{…}` placeholder with extracted data):
+
+```markdown
+## 🧠 Gang Evaluation: {evaluation_name}
+
+> **{verdict_badge}** &nbsp;|&nbsp; Mode: `{quality_mode}` &nbsp;|&nbsp; Cost: ~${cost} &nbsp;|&nbsp; Date: {YYYY-MM-DD}
+
+---
+
+### 📋 Executive Summary
+{executive_summary — 3-4 sentences extracted from executive-brief.md}
+
+---
+
+### 🎯 Scores
+
+| Dimension | Score | Confidence |
+|-----------|------:|------------|
+{For each scored dimension:}
+| {Dimension name} | {score}/10 | {confidence as %} |
+| **Weighted Average** | **{avg}/10** | |
+
+---
+
+### ⚠️ Top 3 Risks
+{risk_1}
+{risk_2}
+{risk_3}
+
+---
+
+### 🔴 Kill Switches
+{kill_switches as bullet list, or "_None identified_" if empty}
+
+---
+
+### ✅ Quick Wins
+{quick_wins as bullet list, or "_None listed_" if empty}
+
+{INCLUDE THIS BLOCK ONLY WHEN verdict is CONDITIONAL-GO:}
+---
+
+### 🔸 Conditions for Full GO
+{conditions as numbered list}
+{END CONDITIONAL-GO BLOCK}
+
+---
+
+### 🗂 Session Details
+
+| Key | Value |
+|-----|-------|
+| Session ID | `{session_id}` |
+| Evaluation path | `.gang/{evaluation_type}s/{evaluation_name}/` |
+| Quality mode | `{quality_mode}` |
+| Active agents | {count of active_agents} ({comma-separated list}) |
+| Evidence entries | {evidence_count} |
+| Assumptions tracked | {assumption_count} |
+| Stages completed | {stages_completed joined with " → "} |
+
+---
+
+*Generated by [Gang v1.3.1](https://github.com/ebnrdwan/GangPlugin) · Open Source · MIT License*
+```
+
+Write the composed body to a temp file: `/tmp/gang-issue-{session_id}.md`
+
+---
+
+### Step 4: Call the sync script
+
+Build the script arguments:
+
+```bash
+SCRIPT="{plugin_root}/scripts/github-project-sync.sh"
+ARGS=(
+  --title     "[Gang] {evaluation_name}: {VERDICT} — {YYYY-MM-DD}"
+  --body-file "/tmp/gang-issue-{session_id}.md"
+  --label     "{config.github.label}"
+)
+```
+
+If `config.github.project_number` > 0: append `--project-number {config.github.project_number}`
+If `config.github.milestone` is non-empty: append `--milestone "{config.github.milestone}"`
+If updating (issue_number found in state): append `--issue-number {issue_number}`
+
+Execute:
+```bash
+bash "$SCRIPT" "${ARGS[@]}"
+```
+
+On non-zero exit code:
+- Exit code 2 → tell the user to install/authenticate `gh` and show the exact command
+- Exit code 3 → tell the user to run `/gang push` from inside their git repo directory
+- Exit code 4 → show the raw error output
+
+---
+
+### Step 5: Update `state.json`
+
+Parse the `ISSUE_URL=...` line from the script's stdout.
+
+Extract:
+- `issue_url` — the full URL
+- `issue_number` — the number at the end of the URL
+
+Update `{output_root}/state.json`:
+```json
+{
+  "github_push": {
+    "issue_url":    "{issue_url}",
+    "issue_number": {issue_number},
+    "pushed_at":    "{ISO-8601 timestamp}",
+    "push_stage":   "{current stage: advise or deliver}"
+  }
+}
+```
+
+---
+
+### Step 6: Present results
+
+Show a short confirmation:
+
+```
+✓ GitHub Issue created
+  Title:   [Gang] {evaluation_name}: {VERDICT} — {date}
+  URL:     {issue_url}
+  Project: {#project_number or "none"}
+
+Stakeholders can track this evaluation at: {issue_url}
+```
+
+If verdict is GO or CONDITIONAL-GO and `/gang deliver` has NOT been run yet:
+> "Tip: Run `/gang deliver` to generate the full GO Package (BRD, architecture, charter, risk register).  
+> After delivery, run `/gang push` again to update the issue with the final deliverables."
+
+---
+
+### Auto-push after ADVISE
+
+When `config.github.enabled: true` AND `config.github.auto_push: true`:
+
+At the END of Stage 5 (ADVISE) — after presenting the verdict — ask the user:
+
+> "Push this evaluation to GitHub Issues?"
+>
+> - "Yes, push now" → run the `/gang push` flow immediately (Steps 2-6 above)
+> - "No, skip" → skip (user can run `/gang push` manually later)
+
+This prompt appears AFTER the verdict is presented, not before.
+
+---
+
+### Update on `/gang deliver`
+
+When `config.github.update_on_deliver: true` AND `state.json.github_push.issue_number` is set:
+
+At the END of Stage 6 (DELIVER) — after the GO Package is confirmed — automatically re-run `/gang push` in UPDATE mode (using `--issue-number`) to append a deliver notice to the issue:
+
+Append to the issue body:
+```markdown
+---
+
+### 📦 GO Package Generated — {YYYY-MM-DD}
+
+The full deliverables package has been generated at `.gang/{type}/{name}/go-package/`:
+
+| Document | File |
+|----------|------|
+| Business Requirements Document | `go-package/brd.md` |
+| Technical Architecture | `go-package/tech-architecture.md` |
+| Project Charter | `go-package/project-charter.md` |
+| Risk Register | `go-package/risk-register.md` |
+| Data Model | `go-package/data-model.md` |
+| API Contracts | `go-package/api-contracts.md` |
+
+*Updated by Gang v1.3.1 after /gang deliver*
+```
 
 ## Error Handling
 
