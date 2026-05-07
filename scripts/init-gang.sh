@@ -95,7 +95,7 @@ STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Initialize state file
 cat > "$OUTPUT_ROOT/state.json" << EOF
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "session_id": "$SESSION_ID",
   "started_at": "$STARTED_AT",
   "stages_completed": [],

@@ -1,10 +1,10 @@
 ---
 name: gang
 description: "Multi-agent business committee that evaluates product ideas through structured expert debate. Use when: the user wants to evaluate a business idea, product concept, or strategic initiative; needs multi-perspective analysis (product, market, UX, finance, tech, strategy); wants scored strategic plans with Go/No-Go recommendation; needs Google Stitch-ready UI specifications; or asks to 'run a gang review', 'evaluate this idea', 'should we build this'. Subcommands: init, think, debate, score, advise, deliver, reinit, run, status, config, evaluations, validate."
-version: 1.3.1
+version: 1.3.2
 ---
 
-# Gang — Multi-Agent Business Committee v1.3.1
+# Gang — Multi-Agent Business Committee v1.3.2
 
 A 6-stage pipeline that orchestrates configurable domain experts through structured debate to produce evidence-backed, rubric-anchored scored strategic plans and executive-ready recommendations. Every aspect is configurable: roles, debate mode, cost budget, model routing, evidence linking, scoring rubrics, validation, and failure handling.
 
@@ -1063,7 +1063,7 @@ When the user runs `/gang status`:
 Gang Committee Status
 ━━━━━━━━━━━━━━━━━━━━━━━━
 Session: {session_id}
-Version: 1.3.1
+Version: 1.3.2
 Mode: {quality_mode}
 Evaluation: {type} — {name}
 

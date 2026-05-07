@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJMMyA3djEwbDkgNSA5LTVWN2wtOS01eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=" alt="Claude Code Plugin">
-  <img src="https://img.shields.io/badge/version-1.3.1-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.3.2-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/agents-9_configurable-orange?style=for-the-badge" alt="Agents">
   <img src="https://img.shields.io/badge/features-12-brightgreen?style=for-the-badge" alt="Features">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
@@ -30,13 +30,59 @@
 
 ---
 
-## What's New in v1.3.1
+## What's New in v1.3.2
+
+### 🔗 GitHub Projects Integration
+
+Gang can now push evaluation results directly onto your GitHub Projects v2 boards as rich, typed draft cards — no issue created, no manual copy-paste.
+
+#### Setup — zero-config onboarding in `/gang init`
+- **Auto-discover boards** — on first init, Gang runs `gh project list --owner` and shows you all available boards
+- **Multi-select** — connect one or several boards in a single step
+- **Card type preference** — pick a default (feature/enhancement/initiative/change/spike) or choose "ask me each time"
+- **Auto-push toggle** — optionally push automatically right after `/gang advise` completes
+- Everything written to `.gang/config.yaml` — edit any time with no re-init needed
+
+#### New command — `/gang push`
+- Creates a **draft item directly on the GitHub Projects v2 board** (`gh project item-create`) — no GitHub Issue involved
+- Falls back to a GitHub Issue only when no project boards are configured
+- Re-push after `/gang deliver` adds a second "DELIVERED" card with the GO Package table
+
+#### Multi-board support
+- `config.github.projects` is now an **array** — configure as many boards as needed
+- **1 board** → pushes silently with no extra question
+- **2+ boards** → presents a multi-select: push to specific boards or "All boards"
+- Script runs once per target board; all result URLs shown in the summary
+
+#### 5 typed card skeletons (`card-skeletons.md`)
+Every card type has its own structured template with `📌 Required`, `📝 Review`, and `✏️ Manual` fields:
+
+| Type | Use when |
+|------|----------|
+| 🚀 **Feature** | New functionality that got GO/CONDITIONAL-GO |
+| ✨ **Enhancement** | Improvement to existing functionality |
+| 🏢 **Initiative** | Strategic business-level decision |
+| 🔄 **Change Request** | Modification to existing behaviour or process |
+| 🔬 **Research Spike** | Time-boxed investigation before committing |
+
+All cards include: evaluation scores table, top risks, kill switches, session details, and Gang attribution.
+Feature/Initiative cards add: KPI table, acceptance criteria, scope, conditions (CONDITIONAL-GO only).
+Change cards add: before/after table, rollback plan, testing requirements.
+Spike cards add: hypothesis, research questions (from `assumptions.json`), time-box table, definition of done.
+
+#### Priority derivation
+Cards are auto-tagged with priority from the Gang weighted average score:
+- 🔴 **High** — 8.0–10.0
+- 🟡 **Medium** — 5.0–7.9
+- 🟢 **Low** — 0.0–4.9
+
+### Previous (v1.3.1)
 
 | Feature | Description |
 |---------|-------------|
 | **Domain Expert Profiling Interview** | 5-6 adaptive questions build a niche-specific expert profile — trading style, asset class, perspective, skepticism focus, benchmarks |
-| **Sub-Specialization Awareness** | Auto-detects when a domain has meaningful niches (e.g., intraday vs swing vs long-term, equities vs commodities vs crypto) and asks targeted follow-ups |
-| **Niche-Calibrated Pitfalls** | P4 question adapts to the sub-specialization — different traps for intraday signals vs long-term investment advice |
+| **Sub-Specialization Awareness** | Auto-detects when a domain has meaningful niches and asks targeted follow-ups |
+| **Niche-Calibrated Pitfalls** | P4 question adapts to the sub-specialization |
 
 ### Previous (v1.3.0)
 
@@ -303,7 +349,7 @@ These are hard constraints in the CEO/CTO Advisor's prompt, not just guidelines.
 Gang Committee Status
 ━━━━━━━━━━━━━━━━━━━━━━━━
 Session: gang-20260330-143022
-Version: 1.3.1
+Version: 1.3.2
 Mode: product_review
 Evaluation: feature — stock-details-page
 
