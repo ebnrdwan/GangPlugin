@@ -1254,6 +1254,18 @@ Read the following files:
 
 **From `{output_root}/evidence.json`:** count → `evidence_count`
 
+**Detect GitHub repo info (for file linking):**
+
+Run these commands silently:
+```bash
+REPO_URL=$(gh repo view --json url -q .url 2>/dev/null || true)
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+```
+
+- If `REPO_URL` is non-empty: construct `{go_package_base_url}` = `{REPO_URL}/blob/{BRANCH}/{output_root}/go-package`
+  - Example: `https://github.com/ebnrdwan/GangPlugin/blob/main/.gang/go-package`
+- If `REPO_URL` is empty (not a git repo or no remote): set `{go_package_base_url}` = `""` (fallback to plain paths)
+
 **Derive priority from weighted average:**
 - 8.0–10.0 → `🔴 High`
 - 5.0–7.9  → `🟡 Medium`
@@ -1297,6 +1309,19 @@ Fill every `{placeholder}` using the extracted data:
 | `{hypothesis}` | context-brief.md purpose/problem statement |
 | `{Research question N}` | unvalidated assumptions from assumptions.json |
 | `as-{id}` / `{assumption text}` / `{validation plan}` | assumptions.json entries |
+
+**GO Package placeholders (only when "deliver" is in `stages_completed`):**
+| Placeholder | Source |
+|-------------|--------|
+| `{go_package_base_url}` | Constructed in Step 2: `{REPO_URL}/blob/{BRANCH}/{output_root}/go-package` |
+| `{go_package_brd_link}` | `[brd.md]({go_package_base_url}/brd.md)` — or `` `go-package/brd.md` `` if no repo URL |
+| `{go_package_arch_link}` | `[tech-architecture.md]({go_package_base_url}/tech-architecture.md)` |
+| `{go_package_charter_link}` | `[project-charter.md]({go_package_base_url}/project-charter.md)` |
+| `{go_package_risk_link}` | `[risk-register.md]({go_package_base_url}/risk-register.md)` |
+| `{go_package_data_link}` | `[data-model.md]({go_package_base_url}/data-model.md)` |
+| `{go_package_api_link}` | `[api-contracts.md]({go_package_base_url}/api-contracts.md)` |
+
+**If "deliver" is in `stages_completed`:** append the GO Package section (from `card-skeletons.md`) **before** the `🗂 Gang Session Details` section in the filled body.
 
 **Skeleton fields marked `✏️ Manual`:** leave as-is — the team fills them after the card is created.
 
@@ -1435,23 +1460,29 @@ When `config.github.update_on_deliver: true` AND `state.json.github_push` is pop
 
 At the end of Stage 6 (DELIVER), automatically create a **second draft card** on **every board that received the original push** (use `config.github.projects` with the same `TARGET_BOARDS` from the original push, or all boards if original push is unknown).
 Use the same card type. Title: `[Gang][{CardType}] {evaluation_name}: DELIVERED — {date}`.
-Body leads with the deliverables table, then includes the full evaluation body below:
+Body leads with the deliverables table, then includes the full evaluation body below.
+
+Before building the body, resolve `{go_package_base_url}` using the same Step 2 logic (repo URL + branch detection). Then build the card:
 
 ```markdown
 ### 📦 GO Package — {YYYY-MM-DD}
 
-| Document | File |
+| Document | Link |
 |----------|------|
-| Business Requirements Document | `go-package/brd.md` |
-| Technical Architecture | `go-package/tech-architecture.md` |
-| Project Charter | `go-package/project-charter.md` |
-| Risk Register | `go-package/risk-register.md` |
-| Data Model | `go-package/data-model.md` |
-| API Contracts | `go-package/api-contracts.md` |
+| Business Requirements Document | {go_package_brd_link} |
+| Technical Architecture | {go_package_arch_link} |
+| Project Charter | {go_package_charter_link} |
+| Risk Register | {go_package_risk_link} |
+| Data Model | {go_package_data_link} |
+| API Contracts | {go_package_api_link} |
+
+> Files live in `{output_root}/go-package/`. Commit them to the repo to make the links above active.
 
 ---
 {full body from the original card, unchanged}
 ```
+
+Where each `{go_package_*_link}` is a markdown hyperlink when `{go_package_base_url}` is available, or a backtick path as fallback.
 
 
 ## Error Handling
