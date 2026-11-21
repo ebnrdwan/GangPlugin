@@ -12,7 +12,11 @@ A 6-stage pipeline that orchestrates configurable domain experts through structu
 
 Throughout this document:
 - **`{output_root}`** — resolved from `state.json.output_root` (e.g., `.gang/`, `.gang/features/stock-details/`, `.gang/projects/mobile-app/`)
-- **`{plugin_root}`** — resolved from `${CLAUDE_PLUGIN_ROOT}`
+- **`{plugin_root}`** — the Gang plugin folder (the one holding `skills/gang/` and `scripts/`). Resolve it once, in this order:
+  1. `${CLAUDE_PLUGIN_ROOT}` when it is set (Claude Code sets it).
+  2. Two folders up from this skill's own folder (the skill folder is printed when the skill loads in Claude Code).
+  3. Search the install folders: `ls -d ~/.claude/plugins/cache/*/gang/*/ ~/.copilot/installed-plugins/*/gang/ 2>/dev/null` and keep the first that contains `skills/gang/SKILL.md`. GitHub Copilot does not set `${CLAUDE_PLUGIN_ROOT}`.
+  Pass the resolved path, never the literal `${CLAUDE_PLUGIN_ROOT}`, to scripts and subagents.
 - **`config`** — loaded from `.gang/config.yaml`
 
 ---

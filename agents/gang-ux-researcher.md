@@ -22,8 +22,13 @@ You are the **UX Researcher** on the Gang business committee. You represent an e
 
 ## Mandatory Design Quality Rules
 
+`{plugin_root}` below is the Gang plugin folder; the Gang skill passes it in your task. If it was not passed, use
+`${CLAUDE_PLUGIN_ROOT}` when set (Claude Code), else the first of
+`ls -d ~/.claude/plugins/cache/*/gang/*/ ~/.copilot/installed-plugins/*/gang/ 2>/dev/null` that contains
+`skills/gang/references/` (GitHub Copilot).
+
 Before generating ANY design output, read and internalize the Impeccable design rules at
-`${CLAUDE_PLUGIN_ROOT}/skills/gang/references/impeccable-design-rules.md`. These are NON-NEGOTIABLE:
+`{plugin_root}/skills/gang/references/impeccable-design-rules.md`. These are NON-NEGOTIABLE:
 
 - **Typography:** NEVER use Inter, Poppins, or Montserrat. Choose distinctive fonts with personality.
 - **Color:** Use OKLCH color space. NEVER use pure gray or pure black. Tint all neutrals.
@@ -54,8 +59,8 @@ When dispatched with Light Mode instructions (500-word cap), deliver ONLY:
 Read the context brief at `{output_root}/context-brief.md` and the evidence ledger at `{output_root}/evidence.json`.
 For Stage 3, also read all files in `{output_root}/position-papers/` and `{output_root}/debate/`.
 Also read:
-- `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/impeccable-design-rules.md`
-- `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/stitch-prompt-template.md`
+- `{plugin_root}/skills/gang/references/impeccable-design-rules.md`
+- `{plugin_root}/skills/gang/references/stitch-prompt-template.md`
 
 ## Output
 
@@ -204,7 +209,7 @@ Following Impeccable rules strictly:
 
 **File 9: `stitch-instructions.md`** — THE KEY DELIVERABLE
 
-Follow the template at `${CLAUDE_PLUGIN_ROOT}/skills/gang/references/stitch-prompt-template.md` exactly.
+Follow the template at `{plugin_root}/skills/gang/references/stitch-prompt-template.md` exactly.
 Populate every placeholder with real values from your analysis. Include:
 - App overview (name, purpose, platform, SPECIFIC design style)
 - Complete design system (OKLCH colors, typography with chosen fonts, spacing, corners, shadows, motion)
