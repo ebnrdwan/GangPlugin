@@ -15,7 +15,7 @@ Throughout this document:
 - **`{plugin_root}`** — the Gang plugin folder (the one holding `skills/gang/` and `scripts/`). Resolve it once, in this order:
   1. `${CLAUDE_PLUGIN_ROOT}` when it is set (Claude Code sets it).
   2. Two folders up from this skill's own folder (the skill folder is printed when the skill loads in Claude Code).
-  3. Search the install folders: `ls -d ~/.claude/plugins/cache/*/gang/*/ ~/.copilot/installed-plugins/*/gang/ 2>/dev/null` and keep the first that contains `skills/gang/SKILL.md`. GitHub Copilot does not set `${CLAUDE_PLUGIN_ROOT}`.
+  3. Search the install folders: `find ~/.claude/plugins/cache ~/.copilot/installed-plugins -path '*/skills/gang/SKILL.md' 2>/dev/null` and take the folder three levels above the first result (`find` works the same in bash and zsh). GitHub Copilot does not set `${CLAUDE_PLUGIN_ROOT}`.
   Pass the resolved path, never the literal `${CLAUDE_PLUGIN_ROOT}`, to scripts and subagents.
 - **`config`** — loaded from `.gang/config.yaml`
 
@@ -206,6 +206,10 @@ Based on selection:
 - **Feature:** Ask for a slug name → run `bash {plugin_root}/scripts/init-gang.sh --type feature --name {slug}`
 - **Project:** Ask for a slug name → run `bash {plugin_root}/scripts/init-gang.sh --type project --name {slug}`
 - **Flat:** Run `bash {plugin_root}/scripts/init-gang.sh --type flat`
+
+If the script exits with code 3, an evaluation already exists at that place and nothing was changed: tell the user
+and offer `/gang reinit` (refresh it, same session), `/gang status`, or a new slug. Never delete its `state.json` to get
+past the check unless the user asks to start over.
 
 ### Step 1b: GitHub Projects Setup (optional — skip if gh CLI unavailable)
 
@@ -904,7 +908,11 @@ After the advisor completes:
    - **Quick wins**
 3. If UX deliverables exist: remind about Stitch instructions
 
-4. **Automatically proceed to Stage 6 (DELIVER) — no user prompt needed:**
+4. **Record ADVISE as complete before anything else:** run validation if enabled, then update `state.json`: add
+   "advise" to `stages_completed` (once) and set `current_stage` to "deliver" (if GO or CONDITIONAL-GO) or "complete"
+   (if NO-GO). DELIVER's pre-check requires "advise" in `stages_completed`, so this must happen before step 5.
+
+5. **Automatically proceed to Stage 6 (DELIVER) — no user prompt needed:**
    - **GO or CONDITIONAL-GO** → print "📦 Generating GO Package..." and immediately run Stage 6 (full deliver path)
    - **NO-GO** → print "📄 Documenting evaluation..." and immediately run Stage 6 (NO-GO documentation path)
 
@@ -947,9 +955,9 @@ Tell the user: "A post-mortem template has been created at `{output_root}/postmo
 
 ### Step 4: Update State
 
-1. Run validation if enabled
-2. Update `state.json`: add "advise" to `stages_completed`, set `current_stage` to "deliver" (if GO) or "complete" (if NO-GO)
-3. Enter interactive Q&A mode
+1. Make sure Step 2 item 4 ran: "advise" is in `stages_completed` (exactly once) and `current_stage` is set. It was
+   recorded before the automatic DELIVER; do not add it again.
+2. Enter interactive Q&A mode
 
 ---
 

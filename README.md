@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJMMyA3djEwbDkgNSA5LTVWN2wtOS01eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=" alt="Claude Code Plugin">
-  <img src="https://img.shields.io/badge/version-1.3.3-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.3.4-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/agents-9_configurable-orange?style=for-the-badge" alt="Agents">
   <img src="https://img.shields.io/badge/features-12-brightgreen?style=for-the-badge" alt="Features">
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">

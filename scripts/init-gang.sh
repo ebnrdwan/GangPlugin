@@ -46,6 +46,16 @@ case "$EVAL_TYPE" in
     ;;
 esac
 
+# Never overwrite an evaluation that already exists: its session ID and stage state would be replaced while its
+# artifacts stayed behind. Refreshing one is /gang reinit's job (it keeps the session); a new one needs a new name.
+if [[ -f "$OUTPUT_ROOT/state.json" ]]; then
+  EXISTING_SESSION=$(sed -n 's/.*"session_id": *"\([^"]*\)".*/\1/p' "$OUTPUT_ROOT/state.json" | head -1)
+  echo "Error: an evaluation already exists at $OUTPUT_ROOT (session ${EXISTING_SESSION:-unknown}). Nothing was changed." >&2
+  echo "Run /gang reinit to refresh it, /gang status to see it, or init a new one with another --name." >&2
+  echo "To start over, move or delete $OUTPUT_ROOT/state.json first." >&2
+  exit 3
+fi
+
 # Create top-level .gang directories (always needed)
 mkdir -p "$GANG_DIR/features"
 mkdir -p "$GANG_DIR/projects"
